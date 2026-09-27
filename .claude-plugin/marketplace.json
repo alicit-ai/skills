@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "alicit",
+  "owner": {
+    "name": "alicit",
+    "email": "hello@alicit.ai",
+    "url": "https://alicit.ai"
+  },
+  "metadata": {
+    "description": "Agent skills from alicit: scoped, human-approved credentials for AI agents."
+  },
+  "plugins": [
+    {
+      "name": "alicit",
+      "source": "./plugins/alicit",
+      "description": "Run every credentialed command through alicit: the smallest Profile, the shortest TTL and a clear justification, approved by a human on their phone. Covers alicit run, alicit github, alicit git, discovery and failure triage.",
+      "version": "1.8.1",
+      "category": "security"
+    }
+  ]
+}

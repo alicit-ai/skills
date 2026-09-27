@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "alicit",
+  "displayName": "alicit",
+  "version": "1.8.1",
+  "description": "Run every credentialed command through alicit: the smallest Profile, the shortest TTL and a clear justification, approved by a human on their phone. Covers alicit run, alicit github, alicit git, discovery and failure triage.",
+  "author": {
+    "name": "alicit",
+    "email": "hello@alicit.ai",
+    "url": "https://alicit.ai"
+  },
+  "homepage": "https://alicit.ai/install",
+  "repository": "https://github.com/alicit-ai/skills",
+  "license": "Apache-2.0",
+  "keywords": [
+    "alicit",
+    "credentials",
+    "approval",
+    "openbao",
+    "github",
+    "security"
+  ]
+}

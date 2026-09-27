@@ -1,0 +1,19 @@
+{
+  "name": "alicit",
+  "interface": {
+    "displayName": "alicit"
+  },
+  "plugins": [
+    {
+      "name": "alicit",
+      "source": {
+        "source": "local",
+        "path": "./plugins/alicit"
+      },
+      "policy": {
+        "installation": "AVAILABLE"
+      },
+      "category": "Security"
+    }
+  ]
+}

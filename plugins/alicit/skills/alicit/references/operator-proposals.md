@@ -1,0 +1,96 @@
+# Broad credential proposals
+
+The Operator explicitly authorized broad proposals to increase velocity on
+2026-09-13. Prefer existing exact Profiles when convenient; absent one, use these
+configured broad Profiles instead of creating another per-task Profile.
+Confirm their presence in live discovery first. Source configuration alone is
+not a deployed grant. Each credential read still requires an Alicit Approval.
+
+- `github-operator-all`: the existing `gh` adapter uses the target owner's
+  `operator-all` permission set. The token inherits all repositories and
+  permissions already granted to that GitHub App installation. State this broad
+  authority in the Justification; do not describe it as a single-repository token.
+- `operator-credentials`: read stored KV credential sets and credential outputs
+  from the configured GitHub, AWS and Cloudflare Providers. Existing native role
+  names and known KV paths can be requested without individual Profiles.
+
+Both default to one hour and allow fifteen minutes for the Mint decision.
+The Invocation lifetime does not shorten a returned static secret or necessarily
+match the Provider credential lifetime. Keep credentials in the consumer process;
+never print, persist, or extract Provider configuration/seed credentials.
+
+## GitHub commands
+
+The normal broad route is the five-minute shortcut. It still requires an
+explicit Git Target, and the Justification must name the
+installation-wide authority:
+
+```sh
+alicit github \
+  --justification "Use installation-wide GitHub authority to publish the reviewed Pippin migration in darrengruber/pippin" \
+  -- pr create --repo darrengruber/pippin --head feat/shared-apple-release \
+     --base main --title "Use the shared Apple release runner" --body-file pr.md
+```
+
+Use the equivalent long form when a different Invocation TTL is genuinely
+needed:
+
+```sh
+alicit run --profile github-operator-all \
+  --justification "Use the installation-wide GitHub token to publish the reviewed Pippin migration in darrengruber/pippin" \
+  -- gh pr create --repo darrengruber/pippin --head feat/shared-apple-release \
+     --base main --title "Use the shared Apple release runner" --body-file pr.md
+```
+
+The controlled Git/PR adapters retain their own operation limits. This generic
+GitHub token is broader authority; it is not proof that subsequent actions stay
+within the Justification. The active Policy evaluates the Mint and jev may
+contribute Claims, but Cedar makes the Decision and the route remains broad.
+Production je valide is enabled by default; there is no shortcut flag to bypass
+it, and an unavailable or low-confidence jev takes the ordinary Operator wake.
+Every configured TestFlight release Profile is excluded from je valide release,
+so shipping a build always wakes an Operator; signing-material import remains
+eligible.
+Use a reviewed consumer for several API operations
+within one approved credential session rather than requesting a new token for
+every API call. Do not reuse a completed Invocation's credential elsewhere.
+
+`alicit git` is the short form for the narrower authenticated transport case:
+
+```sh
+alicit git \
+  --justification "Push the reviewed alicit change to alicit-ai/alicit destination refs/heads/main" \
+  -- push https://github.com/alicit-ai/alicit.git HEAD:refs/heads/main
+```
+
+It derives the exact Profile from the configured Git Target and caps the TTL at
+five minutes. The controlled transport still accepts only `fetch` or `push`
+with one explicit refspec; local credential-free Git operations run normally.
+
+## Stored sets and other Providers
+
+Create a non-secret request file identifying the endpoint and JSON field paths:
+
+```json
+{"path":"kv/data/my-app/credentials","env":{"SERVICE_TOKEN":["data","data","token"]}}
+```
+
+Replace that example with a known stored set and its actual field names. Then:
+
+```sh
+alicit run --profile operator-credentials \
+  --justification "Read the existing my-app credential set for the reviewed deployment task" \
+  -- python3 scripts/with-proposed-credentials.py request.json -- ./deployment-consumer
+```
+
+The helper reads the proposal before Mint, refuses redirects, and maps selected
+string fields directly into the child environment. It removes the proxy capability
+and ambient GitHub/AWS authority. The child must not print credential values.
+For AWS dynamic credentials select `data.access_key`, `data.secret_key` and
+`data.security_token` with the corresponding AWS environment names. Supply the
+region explicitly to the consumer.
+
+For new roles, permission sets, arbitrary native Provider operations and secret-name inventory, use [native Provider proposals](provider-proposals.md). This credential-read route enables existing credential outputs. A missing Provider, native role,
+secret, external permission or OAuth consent remains a concrete setup gap; a
+broad Profile cannot create that missing authority. Full secret-name inventory
+and arbitrary new Provider role construction are not supplied by this change.
