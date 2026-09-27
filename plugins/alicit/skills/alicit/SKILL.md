@@ -65,8 +65,8 @@ source changes and published archives alone do not update it.
 
 Each `alicit run` can wake the Operator's phone for one approval, so plan the
 commands of one task together and do not poll. A `gh` command still needs its
-own invocation: a `gh` inside `bash -c` gets no credential (see the adapter
-limits below). The CLI writes Mint progress to stderr, so redirect only stdout
+own invocation: a `gh` inside `bash -c` does not get the approved token, and it
+can silently run as a stored `gh` login (see the adapter limits below). The CLI writes Mint progress to stderr, so redirect only stdout
 to a data file: `> out.json`, not `> out.json 2>&1`.
 
 For issue and label work, prefer the repository-exact shortcut:
@@ -166,7 +166,7 @@ A `gh api` command must name its HTTP method with `--method` whenever it passes
 POST, and Alicit rejects the command rather than approve a write that reads
 like a read.
 
-Three GitHub adapter limits fail quietly or with a misleading message:
+Four GitHub adapter limits fail quietly or with a misleading message:
 
 - `gh pr checks` fails with `Resource not accessible by integration`
   (`statusCheckRollup`): the App token cannot read check rollups. Read CI with
@@ -175,9 +175,16 @@ Three GitHub adapter limits fail quietly or with a misleading message:
   `API endpoint must stay under the target repository's issues or labels path`,
   because the shortcut treats `gh api` as issue work. Use
   `alicit run --profile github-operator-all -- gh api ...` for other endpoints.
-- A `gh` started inside `sh -c` gets no credential: the adapter prepares only a
-  `gh` that is the direct child. Its output is empty, not an error. Loop in the
-  outer shell and start one `alicit run -- gh ...` per call.
+- A `gh` started inside `sh -c` does not get the approved token: the adapter
+  prepares only a `gh` that is the direct child. On a host with a stored `gh`
+  login, the nested `gh` silently runs as that login, outside the approval
+  (#198). On a host without one, its output is empty, not an error. Never nest
+  `gh` in a shell: loop in the outer shell and start one
+  `alicit run -- gh ...` per call.
+- An API call outside one repository, such as `gh api orgs/<org>/repos` to
+  create a repository, is refused before approval: the adapter needs a
+  `repos/<owner>/<repo>/...` endpoint right after `api`. No Profile creates a
+  repository. Ask the Operator to create it, then push through `alicit git`.
 
 The child process receives only an invocation-local loopback proxy capability.
 For a command whose executable is `gh`, exactly one requested profile must be

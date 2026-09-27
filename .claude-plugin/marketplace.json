@@ -14,7 +14,7 @@
       "name": "alicit",
       "source": "./plugins/alicit",
       "description": "Run every credentialed command through alicit: the smallest Profile, the shortest TTL and a clear justification, approved by a human on their phone. Covers alicit run, alicit github, alicit git, discovery and failure triage.",
-      "version": "1.8.1",
+      "version": "1.9.0",
       "category": "security"
     }
   ]
