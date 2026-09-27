@@ -1,0 +1,51 @@
+name: Release
+
+# A plugin version changes only in catalog.json. After CI passes on main, this
+# tags each new <plugin>-v<version> and publishes a GitHub Release with the
+# plugin as a tarball. A version that already has a tag is left alone, so a
+# re-run changes nothing.
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5.1.0
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Tag and publish each new plugin version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          jq -r '.plugins[] | "\(.name) \(.version) \(.source.tag // "") \(.source.commit // "")"' catalog.json |
+          while read -r name version source_tag source_commit; do
+            tag="${name}-v${version}"
+            if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+              echo "$tag already exists."
+              continue
+            fi
+            git archive --format=tar.gz --prefix="$name/" -o "$tag.tar.gz" "$SHA:plugins/$name"
+            notes="The $name plugin, version $version."
+            if [ -n "$source_commit" ]; then
+              notes="$notes Synced from alicit-ai/alicit $source_tag ($source_commit)."
+            fi
+            gh release create "$tag" "$tag.tar.gz" --target "$SHA" --title "$tag" --notes "$notes"
+          done

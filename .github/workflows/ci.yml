@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444  # v5.0.0
+        with:
+          node-version: "22"
+
+      - name: Install the checkers
+        run: |
+          python -m pip install --quiet pyyaml==6.0.3
+          npm install --global --silent @anthropic-ai/claude-code
+
+      - name: Manifests match catalog.json, and the skills are valid
+        run: python scripts/build.py --check
+
+      - name: Unit tests
+        run: python -m unittest discover -s tests
+
+      - name: Claude Code accepts the marketplace and every plugin
+        run: |
+          claude plugin validate .
+          for plugin in plugins/*/; do claude plugin validate "$plugin"; done
