@@ -22,6 +22,17 @@ when checking installed capabilities, upgrading, or finishing a stable release.
 The agent-facing executable must be qualified and current for each stable release;
 source changes and published archives alone do not update it.
 
+## Use the MCP server when it is present
+
+If your tools include `alicit_plan` and `alicit_github` (the alicit MCP server,
+locally from `alicit mcp` or remotely through `https://mcp.grubernet.es/mcp`),
+call `alicit_plan` before any alicit command. It applies the same checks as the
+CLI, mints nothing and wakes nobody, and it warns about the failures listed
+below. A Mint tool that returns `pending` gives a `call_id`: call
+`alicit_result` with it instead of repeating the call. No tool returns a
+credential, and no tool can approve. The remote server has no `alicit_run` or
+`alicit_git`, and only Profiles with the `mcp` audience work through it.
+
 ## Run a command
 
 1. Choose a configured Profile for the task. Prefer an existing exact Profile,
