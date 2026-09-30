@@ -1,6 +1,6 @@
 ---
 name: alicit
-description: Use whenever a human or agent command needs GitHub, cloud, infrastructure, object-storage, or 1Password credentials, or when an `alicit:` failure occurs. Enforces scoped Alicit profiles, approval justifications, and sanitized issue reporting; replaces bao-exec and ambient bearer tokens.
+description: Use whenever a human or agent command needs GitHub, cloud, infrastructure, object-storage, or 1Password credentials; when configuring a Docker-based GitHub Actions build; or when an `alicit:` failure occurs. Enforces scoped Alicit profiles, approval justifications, and sanitized issue reporting; replaces bao-exec and ambient bearer tokens.
 ---
 
 # Alicit credentialed commands
@@ -22,6 +22,26 @@ when checking installed capabilities, upgrading, or finishing a stable release.
 The agent-facing executable must be qualified and current for each stable release;
 source changes and published archives alone do not update it.
 
+## Docker CI builds
+
+For every Docker or Compose build on Alicit's ephemeral ARC runners, check out
+the repository and use `./.github/actions/setup-docker-build`. A pull-only job
+passes the read-only `DOCKERHUB_READ_USERNAME` and `DOCKERHUB_READ_TOKEN`; only
+an image-publishing job passes the push token `DOCKERHUB_USERNAME` and
+`DOCKERHUB_TOKEN`, because a CI job runs pull request code. It authenticates
+the fresh DinD daemon before creating Buildx, covering cold base-image and
+Compose service-image pulls that BuildKit cannot restore. Pull-only CI treats
+unavailable authentication as a warning so a temporary Docker Hub lockout does
+not block validation; image-publishing jobs set `dockerhub-login-required:
+"true"` and must fail without a working login. A reusable workflow that runs
+CI must declare `secrets: inherit` when these repository secrets are needed.
+
+Keep each `docker/build-push-action` cache explicit at its call site with a
+dedicated `type=gha` scope and `mode=max`; image stages are distinct cache
+domains, so a shared scope trades useful layers for eviction churn. Keep
+`ignore-error=true` on cache export: image build or push correctness must not
+depend on cache availability.
+
 ## Use the MCP server when it is present
 
 If your tools include `alicit_plan` and `alicit_github` (the alicit MCP server,
@@ -34,6 +54,43 @@ credential, and no tool can approve. The remote server has no `alicit_run` or
 `alicit_git`, and only Profiles with the `mcp` audience work through it.
 
 ## Run a command
+
+For GitHub work, use the Settings runner first. It needs no Profile and no TTL:
+
+```sh
+alicit run -- gh pr list --repo darren-iac/iac
+alicit run -- gh run view 123 --repo darren-iac/iac --log-failed > run.log
+alicit run -- gh api repos/darren-iac/iac/actions/runs --method GET -f branch=main
+alicit run -- git fetch https://github.com/darren-iac/iac.git refs/heads/main:refs/remotes/origin/main
+alicit run --justification "Push the reviewed fix to darren-iac/iac destination refs/heads/fix-ci" \
+  -- git push https://github.com/darren-iac/iac.git HEAD:refs/heads/fix-ci
+```
+
+The runner maps the command to one repository and one GitHub App permission,
+and the active Settings policy (ADR-0107) decides whether a person must
+approve. With the v1 default active, reads, branch pushes, pull request
+changes, comments and labels release with no approval. Tag pushes, merges, and
+repositories the Operator tagged `sensitive` still wake the phone. The
+Justification is optional; the default names the action and the repository.
+Give one when a reviewer should know why.
+
+| Command | Permission on the one repository |
+|---|---|
+| `gh issue ...`, `gh label ...` | issues read or write |
+| `gh pr list`, `view`, `diff`, `status`, `checks` | pull requests read |
+| `gh pr create`, `edit`, `comment`, `close`, `reopen`, `ready`, `review` | pull requests write (cannot push or merge) |
+| `gh run list`, `view`, `watch`, `download`; `gh workflow list`, `view` | actions read |
+| `gh repo view`; `gh release list`, `view`, `download` | contents read |
+| `gh api repos/<owner>/<repo>/...` with GET | chosen by the first path segment |
+| `gh api` writes under `issues`, `labels`, `milestones`, `pulls` | issues or pull requests write |
+| `git fetch` / `git push` | the configured Git Target |
+
+The runner refuses `gh pr merge`, a merge through `gh api`, `gh api graphql`,
+and every other command. For those, name a Profile as described below. Read
+the effective Policy with `alicit settings show`, and one repository's
+effective decisions with `alicit settings catalog get <owner/repo>`.
+
+For work outside the runner:
 
 1. Choose a configured Profile for the task. Prefer an existing exact Profile,
    but do not block on creating one: the Operator-authorized broad proposal
@@ -74,13 +131,15 @@ credential, and no tool can approve. The remote server has no `alicit_run` or
 5. Confirm that the approval surface shows the expected provider, profiles,
    TTL, exact operation, and justification before approving.
 
-Each `alicit run` can wake the Operator's phone for one approval, so plan the
-commands of one task together and do not poll. A `gh` command still needs its
+An `alicit run` that Settings does not release can wake the Operator's phone
+for one approval, so plan the commands of one task together and do not poll. A `gh` command still needs its
 own invocation: a `gh` inside `bash -c` does not get the approved token, and it
 can silently run as a stored `gh` login (see the adapter limits below). The CLI writes Mint progress to stderr, so redirect only stdout
 to a data file: `> out.json`, not `> out.json 2>&1`.
 
-For issue and label work, prefer the repository-exact shortcut:
+`alicit github` is the older shortcut. It chooses the same one-repository
+route as the runner whenever the command is covered, and the Justification
+must then name the repository:
 
 ```sh
 alicit github \
@@ -88,9 +147,8 @@ alicit github \
   -- issue list --repo darren-iac/iac --state all
 ```
 
-For recognized `gh issue`, `gh label`, and repository-scoped issue or label API
-commands, the CLI selects the five-minute `github-repository-exact` Profile and
-derives `issues=read` or `issues=write`. The Provider POST body freezes one
+For a covered command, the CLI selects the five-minute `github-repository-exact`
+Profile and derives the one permission in the table above. The Provider POST body freezes one
 configured owner and one repository. The supported installations are
 `alicit-ai`, `darrengruber`, `darren-iac`, `fourslide`, and `claudefirm`; repositories under
 those owners do not need a per-repository Alicit Profile. The Justification must
@@ -116,9 +174,8 @@ default and the shortcut has no client-side opt-in or opt-out; failure or low
 confidence takes the ordinary Operator wake. Prefer a repository-scoped Profile or
 the controlled Git/PR adapters whenever one covers the work.
 
-The shortcut accepts `gh api` only under a repository's issues or labels path.
-For any other API read, name the Profile yourself and put the endpoint right
-after `api`:
+For an API call the runner does not cover, name the Profile yourself and put
+the endpoint right after `api`:
 
 ```sh
 alicit run --profile github-operator-all --ttl github-operator-all=5m \
@@ -127,8 +184,12 @@ alicit run --profile github-operator-all --ttl github-operator-all=5m \
 ```
 
 The Alicit GitHub Apps have no `checks` permission, so check-runs endpoints
-return 403. Read CI state from the Actions runs and jobs endpoints. Each call
-wakes the Operator, so read once after a local signal instead of polling.
+return 403. Read CI state from the Actions runs and jobs endpoints through the
+runner (`alicit run -- gh run view ...`). Read once after a local signal
+instead of polling.
+Redirect a log read to a file (`gh run view <id> --log-failed > run.log`) and
+search the file; piping it to `tail` discards the approval if you need another
+part of the log.
 
 The production Policy excludes every configured `testflight` and
 `*-testflight` release Profile from je valide release. Shipping a build always
@@ -148,9 +209,18 @@ alicit git \
 Local Git operations need no credential and run normally. Under the five
 configured installations, a repository needs no per-repository Profile:
 `fetch` derives `contents=read` and `push` derives `contents=write`. The
+repository must still be in that owner's GitHub App installation. When an
+installation is limited to selected repositories, a repository outside it (a
+newly created one, typically) fails with `remote: Repository not found` on both
+fetch and push. Add it to the installation's repository access; no Profile or
+Justification change fixes it. The
 shortcut keeps the transport boundary at one repository, `fetch` or `push`,
 one explicit refspec, and no force or delete operation. A workflow-file push
-that needs `workflows=write` must use separately reviewed authority.
+that needs `workflows=write` must use separately reviewed authority: GitHub
+refuses it through this shortcut ("refusing to allow a GitHub App to create or
+update workflow"). The reviewed route is a repository-scoped permission set
+with `workflows: write`, created and minted through
+[native Provider proposals](references/provider-proposals.md#pushing-workflow-files).
 
 For controlled PR commands, read [the PR workflow](references/pull-requests.md)
 before choosing Profiles or command flags. This route requires a compatible
@@ -177,15 +247,14 @@ A `gh api` command must name its HTTP method with `--method` whenever it passes
 POST, and Alicit rejects the command rather than approve a write that reads
 like a read.
 
-Four GitHub adapter limits fail quietly or with a misleading message:
+Six GitHub adapter limits fail quietly or with a misleading message:
 
 - `gh pr checks` fails with `Resource not accessible by integration`
   (`statusCheckRollup`): the App token cannot read check rollups. Read CI with
   `gh run list --branch <branch>` and `gh run view <id> --json jobs` instead.
-- `alicit github -- api repos/<owner>/<repo>/actions/...` is refused with
-  `API endpoint must stay under the target repository's issues or labels path`,
-  because the shortcut treats `gh api` as issue work. Use
-  `alicit run --profile github-operator-all -- gh api ...` for other endpoints.
+- A `gh api` endpoint outside the runner table (for example
+  `repos/<owner>/<repo>/hooks`) is refused by the runner. Use
+  `alicit run --profile github-operator-all -- gh api ...` for it.
 - A `gh` started inside `sh -c` does not get the approved token: the adapter
   prepares only a `gh` that is the direct child. On a host with a stored `gh`
   login, the nested `gh` silently runs as that login, outside the approval
@@ -196,6 +265,14 @@ Four GitHub adapter limits fail quietly or with a misleading message:
   create a repository, is refused before approval: the adapter needs a
   `repos/<owner>/<repo>/...` endpoint right after `api`. No Profile creates a
   repository. Ask the Operator to create it, then push through `alicit git`.
+- A query string in the endpoint, such as
+  `gh api "repos/<owner>/<repo>/actions/runs?head_sha=<sha>"`, is refused with
+  `GitHub API endpoint contains an unsafe path segment`. Pass each parameter as
+  a field instead: `gh api repos/<owner>/<repo>/actions/runs --method GET -f head_sha=<sha>`.
+- `gh api repos/<owner>/<repo>/actions/jobs/<id>/logs --method GET` prints
+  nothing and says `the response contains terminal escape sequences`. Add
+  `--allow-escape-sequences`, write the log to a file, and strip the codes
+  before you search it. GitHub serves a job's log only after the job ends.
 
 The child process receives only an invocation-local loopback proxy capability.
 For a command whose executable is `gh`, exactly one requested profile must be
@@ -305,15 +382,24 @@ profiles, permission sets, or provider material.
    Envelope and must fail closed unless the operation has a deliberately
    bounded migration or recovery path. Inspect the protected effect before any
    retry; a registration failure does not by itself prove whether it committed.
-3. Check the server-owned chain independently: the named profile exists, its
+3. A command that fails in under a second with "permission denied", before
+   any Approval card, usually targets the wrong Vault. A self-hosted runner's
+   own environment may set `BAO_ADDR` to another OpenBao; a script that only
+   sets `BAO_ADDR` when it is absent keeps that value. Export the Alicit
+   OpenBao address explicitly in every script that runs Alicit on a runner.
+   On a launchd runner, a Trusted Host first needs a Session Request that the
+   Operator must approve within two minutes, then the Mint. A Trusted Host
+   session was refused the broad `operator-credentials` Profile (HTTP 403 in
+   under 10 ms, 2026-09-28); unattended jobs need an exact Profile.
+4. Check the server-owned chain independently: the named profile exists, its
    policy targets the mounted backend path, the provider permission set exists,
    and the backing item or provider configuration exists. Policy acceptance
    alone does not prove the provider is ready.
-4. Treat missing live state as a bootstrap or persistence incident. A dev-mode
+5. Treat missing live state as a bootstrap or persistence incident. A dev-mode
    OpenBao restart can leave repository configuration intact while erasing KV
    data and permission sets. Reconcile the exact missing state instead of
    broadening policy or asking the user to approve repeated identical requests.
-5. Retry once the observed cause has changed, then verify the new request ID
+6. Retry once the observed cause has changed, then verify the new request ID
    and final provider operation. If the credential plane itself still prevents
    reporting, use the sanitized local handoff below.
 

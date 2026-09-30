@@ -82,6 +82,37 @@ LIST can print key names. Other operations print only completion metadata;
 credential fields go directly to the consumer environment. Never put secret
 values in a proposal body, Justification, or logs.
 
+A just-minted Cloudflare API token can fail for a few seconds with
+`Authentication error [code: 10000]`. Wait about 20 seconds in the consumer
+before its first Cloudflare call, or retry it there; retrying the proposal costs
+another Approval.
+
+## Cloudflare roles
+
+A role on the `cloudflare` mount names Cloudflare permission groups against
+account or zone resources. This one serves a Pages site and its zone's DNS:
+
+```json
+{"mount": "cloudflare", "path": "roles/pages-SITE", "method": "POST",
+ "body": {"ttl": 900, "max_ttl": 1800, "policy_document": {"Statement": [
+   {"Effect": "Allow", "Action": ["Zone Read", "DNS Read", "DNS Write"], "Resource": ["cloudflare:zone:ZONE_ID"]},
+   {"Effect": "Allow", "Action": ["Pages Read", "Pages Write"], "Resource": ["cloudflare:account:self"]}]}}}
+```
+
+Mint it with `{"mount": "cloudflare", "path": "creds/pages-SITE", "method": "GET", "env": {"CLOUDFLARE_API_TOKEN": ["data", "token_value"]}}`.
+Put every step of the job (create, deploy, attach domains, change DNS) in one
+consumer, so one Approval covers it, and make the consumer stop before any
+live DNS change when an earlier step fails.
+
+Creating a Pages project with a GitHub `source` fails with error `8000011`
+("internal issue with your Cloudflare Pages Git installation") until the
+account has been linked to the GitHub App through the dashboard's **Connect to
+Git** flow. Installing the Cloudflare Workers and Pages app on GitHub alone does
+not link it. Have the Operator create the project in the dashboard, then let the
+consumer adopt it. Attaching a custom domain in the dashboard re-creates the
+zone's CNAME with a new record ID, which breaks any `import` block that names
+the old one.
+
 ## Outcomes
 
 The helper sends each native operation once and never retries automatically.
@@ -143,3 +174,23 @@ logs.
 Issuance still depends on the upstream permissions the configured installation
 holds. If the App lacks the org permission the call returns an upstream denial,
 which is the real "not authorised" signal — unlike the adapter refusal above.
+
+## Pushing workflow files
+
+The GitHub App refuses a Git push that touches `.github/workflows/` without the
+`workflows` permission, and the `alicit git` shortcut never requests it. When
+the installation holds that permission, create a repository-scoped permission
+set once:
+
+```json
+{ "mount": "github/<owner>", "path": "permissionset/<repo>-workflows", "method": "POST",
+  "body": { "org_name": "<owner>", "repositories": ["<repo>"],
+            "permissions": { "contents": "write", "workflows": "write", "metadata": "read" } } }
+```
+
+Then mint it (`"path": "token/<repo>-workflows"`, `"env": {"GITHUB_TOKEN":
+["data", "token"]}`) and push one explicit refspec from a consumer script that
+sets `GIT_ASKPASS` to a throwaway script printing `x-access-token` and
+`$GITHUB_TOKEN`, with `-c credential.helper=`. The token never reaches argv or
+logs. This worked for `darrengruber/njdmv-checker` on 2026-09-28. Name the
+workflow change in each Justification; the set outlives the task.
