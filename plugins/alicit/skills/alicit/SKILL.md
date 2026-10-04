@@ -247,7 +247,7 @@ A `gh api` command must name its HTTP method with `--method` whenever it passes
 POST, and Alicit rejects the command rather than approve a write that reads
 like a read.
 
-Six GitHub adapter limits fail quietly or with a misleading message:
+Eight GitHub adapter limits fail quietly or with a misleading message:
 
 - `gh pr checks` fails with `Resource not accessible by integration`
   (`statusCheckRollup`): the App token cannot read check rollups. Read CI with
@@ -273,6 +273,15 @@ Six GitHub adapter limits fail quietly or with a misleading message:
   nothing and says `the response contains terminal escape sequences`. Add
   `--allow-escape-sequences`, write the log to a file, and strip the codes
   before you search it. GitHub serves a job's log only after the job ends.
+- `gh pr ready` fails with `Resource not accessible by integration
+  (markPullRequestReadyForReview)`: the App cannot take a pull request out of
+  draft, and REST has no equivalent. Open a pull request that must merge later
+  as a normal pull request and state the merge condition in its body. If it is
+  already a draft, close it and open a new one from the same branch.
+- `gh pr view --json mergeCommit` fails with `Resource not accessible by
+  integration (repository.pullRequest.mergeCommit)`. Request `state,mergedAt`
+  instead. After an uncertain `gh pr merge`, read that state before any retry:
+  a merge that a second call reports as `already merged` did succeed.
 
 The child process receives only an invocation-local loopback proxy capability.
 For a command whose executable is `gh`, exactly one requested profile must be
