@@ -42,5 +42,6 @@ plugin["source"].update(tag=tag, commit=commit)
 open(path, "w").write(json.dumps(catalog, indent=2, ensure_ascii=False) + "\n")
 PY
 
-python3 "$root/scripts/build.py"
+# build.py declares its own dependencies (PEP 723), so uv installs them.
+uv run --script "$root/scripts/build.py"
 echo "Synced the alicit skill from $tag ($commit)."
