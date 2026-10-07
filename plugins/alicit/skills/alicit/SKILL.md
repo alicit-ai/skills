@@ -255,6 +255,21 @@ update workflow"). The reviewed route is a repository-scoped permission set
 with `workflows: write`, created and minted through
 [native Provider proposals](references/provider-proposals.md#pushing-workflow-files).
 
+Controlled Git checks the effective credential helpers for its repository URL
+before starting a run. A standing helper makes plain Git capable of authenticating
+outside alicit, so the transport refuses and reports the configuration origins.
+`alicit doctor` warns about helpers for `https://github.com/`; the transport also
+checks repository-specific configuration. Neither command executes a helper or
+removes it, and `doctor --fix` does not change Git configuration. The Operator must
+review those origins and remove the effective helper or apply an empty matching
+helper reset. An unrelated host's helper alone does not block GitHub.
+
+Generic run, batch and workload children receive an empty temporary gh configuration
+and no ambient GitHub or enterprise token variables. This prevents accidental
+inheritance by nested gh. It is not an OS sandbox: a child can deliberately override
+its environment or read host credentials. Use the direct gh adapter for approved
+GitHub access; ADR-0116's full host confinement remains unfinished.
+
 For controlled PR commands, read [the PR workflow](references/pull-requests.md)
 before choosing Profiles or command flags. This route requires a compatible
 Vault and delivered v4 Apple Approvers; it executes the reviewed request without

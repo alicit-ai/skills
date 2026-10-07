@@ -1,6 +1,6 @@
 {
   "name": "alicit",
-  "version": "1.16.1",
+  "version": "1.16.2",
   "description": "Run every credentialed command through alicit: the smallest Profile, the shortest TTL and a clear justification, approved by a human on their phone. Covers alicit run, alicit github, alicit git, discovery and failure triage.",
   "author": {
     "name": "alicit",
