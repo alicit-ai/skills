@@ -14,25 +14,25 @@ not a deployed grant. Each credential read still requires an Alicit Approval.
   from the configured GitHub, AWS and Cloudflare Providers. Existing native role
   names and known KV paths can be requested without individual Profiles.
 
-Both default to one hour and allow fifteen minutes for the Mint decision.
+Both default to one hour and allow fifteen minutes for the Request decision.
 The Invocation lifetime does not shorten a returned static secret or necessarily
 match the Provider credential lifetime. Keep credentials in the consumer process;
 never print, persist, or extract Provider configuration/seed credentials.
 
 ## GitHub commands
 
-The normal broad route is the five-minute shortcut. It still requires an
-explicit Git Target, and the Justification must name the
-installation-wide authority:
+The normal broad route is `alicit run -- gh` with no Profile. It runs for
+five minutes, still requires an explicit target, and the Justification must
+name the installation-wide authority:
 
 ```sh
-alicit github \
+alicit run \
   --justification "Use installation-wide GitHub authority to publish the reviewed Pippin migration in darrengruber/pippin" \
-  -- pr create --repo darrengruber/pippin --head feat/shared-apple-release \
+  -- gh pr create --repo darrengruber/pippin --head feat/shared-apple-release \
      --base main --title "Use the shared Apple release runner" --body-file pr.md
 ```
 
-Use the equivalent long form when a different Invocation TTL is genuinely
+Use the equivalent long form when a different TTL is genuinely
 needed:
 
 ```sh
@@ -44,23 +44,19 @@ alicit run --profile github-operator-all \
 
 The controlled Git/PR adapters retain their own operation limits. This generic
 GitHub token is broader authority; it is not proof that subsequent actions stay
-within the Justification. The active Policy evaluates the Mint and jev may
-contribute Claims, but Cedar makes the Decision and the route remains broad.
-Production je valide is enabled by default; there is no shortcut flag to bypass
-it, and an unavailable or low-confidence jev takes the ordinary Operator wake.
-Every configured TestFlight release Profile is excluded from je valide release,
-so shipping a build always wakes an Operator; signing-material import remains
-eligible.
+within the Justification. The active Policy evaluates the Request and the
+route remains broad. The Policy releases no configured TestFlight release
+Profile without an Operator, so shipping a build always wakes one.
 Use a reviewed consumer for several API operations
 within one approved credential session rather than requesting a new token for
-every API call. Do not reuse a completed Invocation's credential elsewhere.
+every API call. Do not reuse the credential of a completed run elsewhere.
 
-`alicit git` is the short form for the narrower authenticated transport case:
+`alicit run -- git` with no Profile is the narrower authenticated transport case:
 
 ```sh
-alicit git \
+alicit run \
   --justification "Push the reviewed alicit change to alicit-ai/alicit destination refs/heads/main" \
-  -- push https://github.com/alicit-ai/alicit.git HEAD:refs/heads/main
+  -- git push https://github.com/alicit-ai/alicit.git HEAD:refs/heads/main
 ```
 
 It derives the exact Profile from the configured Git Target and caps the TTL at
@@ -83,7 +79,7 @@ alicit run --profile operator-credentials \
   -- python3 scripts/with-proposed-credentials.py request.json -- ./deployment-consumer
 ```
 
-The helper reads the proposal before Mint, refuses redirects, and maps selected
+The helper reads the proposal before the Request, refuses redirects, and maps selected
 string fields directly into the child environment. It removes the proxy capability
 and ambient GitHub/AWS authority. The child must not print credential values.
 For AWS dynamic credentials select `data.access_key`, `data.secret_key` and

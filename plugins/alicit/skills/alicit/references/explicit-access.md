@@ -8,7 +8,7 @@ v5. The catalog advertises protocol support, not an access grant. As of
 capability issuance and Apple v5 delivery are pending. Do not replace the trusted
 installed CLI or enable production authority merely to bypass that rollout.
 
-Read `alicit discover --json` through the existing bound Operator Session. Choose
+Read `alicit doctor --catalog --json` through the existing bound Operator Session. Choose
 one published capability matching the required Provider operation. Do not invent
 a capability ID, path, method or parameter choice. Save a regular JSON file with
 this shape (the names below belong to the Compose fixture only):
@@ -39,7 +39,7 @@ non-secret choices are supported. Omit the TTL or set zero for the capability
 default. Do not mix this flag with Profiles, Profile TTL overrides, or controlled
 Git/PR inputs. The generic `gh` credential adapter still requires its Profile.
 
-One explicit Invocation can obtain one Mint. Its native ceiling is independent
+One explicit run can make one Request. Its native ceiling is independent
 of Cedar; Policy may deny or require signed review. Invocation TTL bounds that
 Invocation and does not establish the expiration of a returned Provider
 credential. Inspect the first operation's result before requesting another

@@ -2,14 +2,14 @@
 
 ## Start with the executable agents actually run
 
-Run `command -v alicit`, `alicit version`, and `alicit --help` before assuming a
+Run `command -v alicit`, `alicit --version`, and `alicit help` before assuming a
 source feature is installed. On the release Mac the supported path is
 `~/.local/bin/alicit`; inspect its resolved path, SHA-256 and `go version -m`
 when it reports `dev`. A successful command from a worktree does not refresh the
 global installation. Do not place an experimental binary earlier on PATH.
 
-Use installed help to choose discovery and request/status commands. Where
-supported, `alicit discover --json` returns metadata without a Mint; coverage
+Use installed help to choose the catalog and Request outcome commands. Where
+supported, `alicit doctor --catalog --json` returns metadata without a Request; coverage
 is not a grant or readiness proof. Use the narrow server-owned Profile and exact
 reviewable operation. Preserve the request ID and terminal outcome before retry;
 a lost response is a reason to observe effects, not repeat a mutation.

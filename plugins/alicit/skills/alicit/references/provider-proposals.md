@@ -25,6 +25,31 @@ permissions held by the configured Provider. Return the observed upstream denial
 to the Agent if those permissions are missing. Do not confuse writing a role with
 successful credential issuance, or a Provider role with a new upstream IAM role.
 
+## Which Vault a mount belongs to
+
+The route reaches only the alicit Vault's mounts. The Cluster Vault, the
+OpenBao that CI jobs and ESO read (`secret/ci/*`, `cloudflare-account/*`), is a
+separate server, and its `secret` mount is not mirrored (the pending row in
+`docs/providers/cluster-vault-parity.md`). A CI credential therefore has no
+proposal write route: use that repository's own import workflow. A secret value
+never goes in a proposal body in any case, because the helper puts the frozen
+body in the process arguments.
+
+Check a mount before you ask for anything. The helper refuses an undiscovered
+mount locally, before any Approval:
+
+```sh
+python3 - <<'PY'
+import importlib.util, json, subprocess
+spec = importlib.util.spec_from_file_location("pp", "<skill>/scripts/provider-proposal.py")
+pp = importlib.util.module_from_spec(spec); spec.loader.exec_module(pp)
+mounts = [p["path"] for p in json.loads(subprocess.check_output(["alicit", "discover", "--json"]))["providers"]]
+pp.validate({"mount": "secret", "path": "metadata/ci", "method": "LIST", "output": "keys"}, mounts)
+PY
+```
+
+`ValueError: select a discovered secrets backend` means no proposal can reach it.
+
 ## Submit
 
 Write a non-secret JSON proposal, for example an AWS role with the exact native
@@ -99,7 +124,7 @@ account or zone resources. This one serves a Pages site and its zone's DNS:
    {"Effect": "Allow", "Action": ["Pages Read", "Pages Write"], "Resource": ["cloudflare:account:self"]}]}}}
 ```
 
-Mint it with `{"mount": "cloudflare", "path": "creds/pages-SITE", "method": "GET", "env": {"CLOUDFLARE_API_TOKEN": ["data", "token_value"]}}`.
+Request it with `{"mount": "cloudflare", "path": "creds/pages-SITE", "method": "GET", "env": {"CLOUDFLARE_API_TOKEN": ["data", "token_value"]}}`.
 Put every step of the job (create, deploy, attach domains, change DNS) in one
 consumer, so one Approval covers it, and make the consumer stop before any
 live DNS change when an earlier step fails.
@@ -119,20 +144,20 @@ The helper sends each native operation once and never retries automatically.
 An HTTP failure reports only its safe numeric status, not the Provider response
 body or arbitrary error text. A failed proposal keeps that status and names the
 status lookup; it does not replace the diagnostic with a generic failure.
-Preserve the request IDs printed by Alicit and use
-`alicit status <request-id>`, with `--json` for a machine-readable record, for
-passive observation when supported by the installed CLI. The lookup names the
-kind, `Mint` or `Session Request`, and prints the Provider HTTP status when the
+Preserve the Request IDs printed by Alicit and use
+`alicit doctor --request <request-id>`, with `--json` for a machine-readable
+record, for passive observation when supported by the installed CLI. The lookup
+names the kind, Request or Sign-in Request, and prints the Provider HTTP status when the
 server retains one. Inspect outer and native IDs separately: outer Approval or
 API success does not establish native credential issuance. An unavailable observation
-remains unknown and requires correlated server evidence; do not create a new Mint
+remains unknown and requires correlated server evidence; do not create a new Request
 just to obtain status.
 An interrupted or unknown write must be checked before resubmitting. Native
 Control Group unwrap is not an exactly-once write facility; repeated unwrap can
 repeat a write. Use immutable task-specific role names, and KV CAS when applicable.
 Use separate proposals for intentional deletion or changing shared roles, naming
 that effect in the Justification. A completed role write is followed by a separate
-credential Mint and a concrete upstream operation to qualify the intended access.
+credential Request and a concrete upstream operation to qualify the intended access.
 
 ## Reaching an endpoint the command adapter refuses
 
@@ -149,7 +174,7 @@ alicit: GitHub API commands require an owner-scoped repos/<owner>/<repository>/.
 as "wrong command", not "insufficient permission" — the same installation may
 hold the org permission already. Widening a permission set to answer it is the
 wrong repair, and the explicit single-operation route is no help either when
-`alicit discover --json` reports no published capabilities.
+`alicit doctor --catalog --json` reports no published capabilities.
 
 Use the credential form of a proposal to put the token in the consumer's
 environment, then call the API directly:
@@ -161,7 +186,7 @@ environment, then call the API directly:
 
 ```sh
 python3 .../provider-proposal.py credential.json \
-  --justification "Mint <org> <permission-set> to add <repo> to the <group> runner group" \
+  --justification "Request <org> <permission-set> to add <repo> to the <group> runner group" \
   -- bash ./grant.sh
 ```
 
@@ -178,7 +203,7 @@ which is the real "not authorised" signal — unlike the adapter refusal above.
 ## Pushing workflow files
 
 The GitHub App refuses a Git push that touches `.github/workflows/` without the
-`workflows` permission, and the `alicit git` shortcut never requests it. When
+`workflows` permission, and `alicit run -- git push` never requests it. When
 the installation holds that permission, create a repository-scoped permission
 set once:
 

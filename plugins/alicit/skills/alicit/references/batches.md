@@ -1,7 +1,7 @@
 # Request several explicit credentials
 
 Use this branch when the task needs several credentials and the installed CLI
-supports `alicit request --batch-file`. First follow [explicit-access rollout and
+supports `alicit run --batch-file`. First follow [explicit-access rollout and
 discovery requirements](explicit-access.md). The server still advertises
 `explicit_requests: single_operation`; a compatible CLI composes separate
 Invocations. Local batch qualification does not enable production capabilities
@@ -32,7 +32,7 @@ required or accepted. This example uses disposable Compose metadata:
 Run a consumer that parses newline-delimited JSON from stdin:
 
 ```sh
-alicit request --batch-file batch.json -- ./credential-consumer
+alicit run --batch-file batch.json -- ./credential-consumer
 ```
 
 The consumer receives `ALICIT_BATCH_FORMAT=alicit.batch-result/v1`. Records carry
@@ -59,12 +59,12 @@ Provider payload and cover every manifest item, even if the consumer exits early
 confirms bytes entered the pipe, not that the consumer used them; `unknown` means
 a partial write. `invocation_cleanup: failed` or `unknown` requires investigation.
 An issuance failure can leave `outcome: not_attempted` and cleanup `unknown`:
-no Mint was attempted, but token issuance was not conclusively observed.
+no Request was attempted, but token issuance was not conclusively observed.
 
 A zero exit means all items succeeded and were written, the consumer exited zero,
 and known cleanup succeeded. A nonzero exit does not mean no credentials were
 released. Never replay the whole manifest merely because it failed. Review each
-receipt and the consumer's actual work, investigate uncertain Mint/Provider
+receipt and the consumer's actual work, investigate uncertain Request/Provider
 outcomes using their IDs, and make a new minimal ask only after the cause is
 understood. Forced process termination may prevent receipts and cleanup; this
 route does not provide durable batch resume.

@@ -1,8 +1,9 @@
 # Discover configured Providers and requestable access
 
-Run `alicit discover --json` with the installed trusted CLI. It uses the bound
-Operator Session and does not Mint a credential. Initial Session creation can
-still require its own approval if no usable Session exists.
+Run `alicit doctor --catalog --json` with the installed trusted CLI. It uses
+the stored Operator Session and makes no Request for a credential. It never
+wakes the Operator: if no usable Session exists, it says so and stops. A later
+`alicit run` or `alicit doctor --fix` sends the Sign-in Request.
 
 Recognize the catalog's coverage before choosing an ask:
 
@@ -34,7 +35,7 @@ name is visible; ask for suitable configuration when none matches the task. Vers
 or a guarantee that the explicit request language supports that Provider.
 
 The inventory is read on each request, but is not an atomic snapshot with Profile
-and capability configuration. `observed_at` is not a promise about a later Mint.
+and capability configuration. `observed_at` is not a promise about a later Request.
 If the Provider inventory source fails, the server reports discovery unavailable;
 do not interpret it as an empty installation or retry credential issuance.
 

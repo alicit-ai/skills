@@ -12,7 +12,7 @@ target information in their path.
 ## Conventions
 
 - **Create an issue**:
-  For a bug, use `alicit report --title "..." --body-file report.md`. It fixes
+  For a bug, use `alicit doctor --report --title "..." --body-file report.md`. It fixes
   the repository and the `bug` plus `needs-triage` labels. It files through the
   Reporter, the one standing GitHub App credential on the host, so it needs no
   alicit Vault, Approver or Approval. Use `--body-file -` for reviewed standard
@@ -21,7 +21,7 @@ target information in their path.
 - **Read an issue**:
   `alicit run --profile github-issues --ttl github-issues=5m --justification "Read issue 42 and its labels in alicit-ai/alicit to evaluate the matching report" -- gh issue view 42 --repo alicit-ai/alicit --json number,title,body,labels,comments`.
 - **List issues**:
-  `alicit run --profile github-issues --ttl github-issues=5m --justification "Search open and closed alicit-ai/alicit issues for a duplicate of the reproduced failure" -- gh issue list --repo alicit-ai/alicit --state all --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'`.
+  `alicit run --profile github-issues --ttl github-issues=5m --justification "Search the open and closed issues of alicit-ai/alicit for a duplicate of the reproduced failure" -- gh issue list --repo alicit-ai/alicit --state all --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'`.
   Add appropriate `--label` and `--state` filters.
 - **Comment on an issue**:
   `alicit run --profile github-issues --ttl github-issues=5m --justification "Add sanitized reproduction evidence to issue 42 in alicit-ai/alicit" -- gh issue comment 42 --repo alicit-ai/alicit --body "..."`.
@@ -37,13 +37,14 @@ approval justification depends on the current directory.
 Every command above targets `alicit-ai/alicit`, which is the one repository
 the `issues` permission set names. For issue and label work on any repository
 under the five configured owners (`alicit-ai`, `darrengruber`, `darren-iac`,
-`fourslide`, `claudefirm`), use the shortcut
-`alicit github --justification "..." -- issue list --repo <owner>/<repo>`. It
+`fourslide`, `claudefirm`), run `gh` with no Profile:
+`alicit run --justification "..." -- gh issue list --repo <owner>/<repo>`, with
+a Justification that names `<owner>/<repo>`. It
 selects the five-minute `github-repository-exact` Profile and derives
 `issues=read` or `issues=write`. A static Profile such as
 `github-renegade-agent-issues` for `darrengruber/renegade-agent` also works for
 its one repository. A Profile used against a repository its permission set does
-not name mints a valid token, and GitHub then reports
+not name still gets a valid token, and GitHub then reports
 `Could not resolve to a Repository`.
 
 A `gh api` command must name its method with `--method` whenever it passes
@@ -77,7 +78,7 @@ New issues should include:
 - a short outcome-oriented title;
 - the expected and actual behavior;
 - the smallest safe reproduction or command shape;
-- `alicit version`, platform, and architecture;
+- `alicit --version`, platform, and architecture;
 - the requested profile names and TTLs;
 - the exact non-secret justification shown for approval;
 - relevant sanitized error text and logs; and
@@ -88,15 +89,15 @@ codes, private URLs with embedded credentials, secret values, or unreviewed
 command output. Replace sensitive values with explicit placeholders and say what
 was redacted.
 
-Agents file bug reports with `alicit report`. It sends one fixed issue-create
+Agents file bug reports with `alicit doctor --report`. It sends one fixed issue-create
 request for this repository through the Reporter, and it works when the alicit
 Vault or every Approver is unavailable. Search for duplicates through a
 separately justified read before creating the report.
 
-If `alicit report` itself is unavailable but GitHub is reachable, use the
+If `alicit doctor --report` itself is unavailable but GitHub is reachable, use the
 wrapped `gh issue create` convention above with the `bug` and `needs-triage`
 labels. That route goes through the alicit Vault and an Approval, so it
-bypasses nothing. Keychain status `-25300` from `alicit report` is the common cause: it
+bypasses nothing. Keychain status `-25300` from `alicit doctor --report` is the common cause: it
 means the Reporter is not configured on this host, not that the Keychain is
 broken.
 

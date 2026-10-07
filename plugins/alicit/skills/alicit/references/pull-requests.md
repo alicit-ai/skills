@@ -42,8 +42,8 @@ under a new name and open a new PR. To keep the same PR, merge the base into
 the branch and push that normally. Give the merge commit a Conventional subject
 such as `chore: merge main into <topic>`: the release gate rejects Git's own
 `Merge branch` subject, and a squash merge leaves the commit off `main`.
-Closing a PR is outside this adapter; use `alicit github` with an
-installation-wide justification.
+Closing a PR is outside this adapter; use `alicit run -- gh pr close` with a
+Justification that names its installation-wide GitHub authority.
 
 For merge or squash, also supply `--subject` and exactly one `--body` or
 `--body-file` for the commit text. Rebase rejects those flags and preserves
@@ -59,6 +59,6 @@ and the full text in Details before approving.
 
 Inspect the same PR after an uncertain HTTP outcome or output failure before
 creating another request. A successful PR operation followed by a cleanup error
-is not permission to repeat the mutation. A Mint success alone does not prove
+is not permission to repeat the mutation. A Request success alone does not prove
 that the PR operation succeeded. Generic credentials from other configured
 Profiles can intentionally have broader authority.

@@ -157,6 +157,20 @@ def execute(request, command, environ):
     return 0
 
 
+
+def read_catalog(alicit):
+    """Return the alicit configuration catalog from the installed CLI.
+
+    A four-verb CLI answers `doctor --catalog`. An installed CLI from before
+    ADR-0120 has no doctor verb, so fall back to its discover verb: a script
+    must work beside the installed CLI as well as the next one (ADR-0124).
+    """
+    current = subprocess.run([alicit, "doctor", "--catalog", "--json"], capture_output=True, text=True)
+    if current.returncode == 0:
+        return json.loads(current.stdout)
+    legacy = [alicit, "discover", "--json"]  # ADR-0124 N-1: installed CLI before ADR-0120
+    return json.loads(subprocess.check_output(legacy, text=True))
+
 def main():
     if len(sys.argv) > 1 and sys.argv[1] == "_execute":
         if len(sys.argv) < 3 or len(sys.argv[2]) > 87384:
@@ -180,7 +194,7 @@ def main():
     raw = args.proposal.read_bytes()
     if len(raw) > 65536:
         raise ValueError("proposal exceeds 64 KiB")
-    catalog = json.loads(subprocess.check_output([args.alicit, "discover", "--json"]))
+    catalog = read_catalog(args.alicit)
     if not any(p["name"] == "operator-proposals" for p in catalog["profiles"]):
         raise ValueError("operator-proposals is not deployed")
     request = validate(json.loads(raw), [p["path"] for p in catalog["providers"]])
@@ -214,14 +228,14 @@ def main():
         check=False,
     ).returncode
     # Keep the diagnostic that the Invocation already printed. Alicit writes the
-    # Mint ID and any Provider HTTP status to this same stderr stream, so this
+    # Request ID and any Provider HTTP status to this same stderr stream, so this
     # handler adds the proposal identity and the lookup instead of a replacement
     # message. It never repeats or interprets Provider response text.
     if code != 0:
         print(
             f"Proposal SHA256 {digest} did not complete; alicit exited {code}. "
-            "Read the Mint ID above and run `alicit status <mint-id>` to see its "
-            "retained outcome. Do not retry before you read that outcome.",
+            "Read the Request ID above and run `alicit doctor --request <request-id>` "
+            "to see its retained outcome. Do not retry before you read that outcome.",
             file=sys.stderr,
             flush=True,
         )
