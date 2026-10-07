@@ -69,8 +69,8 @@ and commit in `catalog.json`, and runs `scripts/build.py`. Do not edit
 ### Checks
 
 ```sh
-python3 scripts/build.py --check       # manifests match; skills are valid
-python3 -m unittest discover -s tests
+uv run --script scripts/build.py --check       # manifests match; skills are valid
+uv run --with-requirements scripts/build.py python -m unittest discover -s tests
 claude plugin validate .
 ```
 

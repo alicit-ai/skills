@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.12"
+# dependencies = ["pyyaml==6.0.3"]
+# ///
 """Generate every marketplace manifest from catalog.json, and check the skills.
 
 catalog.json is the only file that a person edits for a plugin's name,
