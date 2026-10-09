@@ -295,7 +295,7 @@ A `gh api` command must name its HTTP method with `--method` whenever it passes
 POST, and Alicit rejects the command rather than approve a write that reads
 like a read.
 
-Eight GitHub adapter limits fail quietly or with a misleading message:
+Eleven GitHub adapter limits fail quietly or with a misleading message:
 
 - `gh pr checks` fails with `Resource not accessible by integration`
   (`statusCheckRollup`): the App token cannot read check rollups. Read CI with
@@ -331,6 +331,19 @@ Eight GitHub adapter limits fail quietly or with a misleading message:
   integration (repository.pullRequest.mergeCommit)`. Request `state,mergedAt`
   instead. After an uncertain `gh pr merge`, read that state before any retry:
   a merge that a second call reports as `already merged` did succeed.
+- `gh api --paginate` prints nothing through the runner. Read one page per
+  call with `-f per_page=100 -f page=<n>`.
+- A `gh api .../actions/runs -f head_sha=<sha>` result can hold runs of other
+  commits. Keep only `select(.head_sha == "<sha>")` before you judge CI, and
+  wait until each expected workflow appears.
+- `gh pr merge` with a Profile that has no pull request scope (for example
+  `github-skills-write`) fails with `Resource not accessible by integration
+  (repository.pullRequest)`. Where no `github-<repo>-pr-merge` Profile exists,
+  merge with `--profile github-operator-all` and
+  `gh api repos/<owner>/<repo>/pulls/<n>/merge --method PUT -f merge_method=squash -f sha=<head>`.
+  `gh workflow run` also needs `github-operator-all`; `alicit-workflows` is not
+  a `github-<permission-set>` Profile. Each such call is one phone approval, so
+  ask the Operator before a run of many (for example one delete per artifact).
 
 The child process receives only an invocation-local loopback proxy capability.
 For a command whose executable is `gh`, exactly one requested profile must be
