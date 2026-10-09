@@ -71,6 +71,11 @@ Create a non-secret request file identifying the endpoint and JSON field paths:
 {"path":"kv/data/my-app/credentials","env":{"SERVICE_TOKEN":["data","data","token"]}}
 ```
 
+This helper takes exactly `path` and `env`, with the mount inside `path`
+(`cloudflare/creds/<role>`). `provider-proposal.py` takes a different form,
+`{"mount", "path", "method", ...}`; giving that form to this helper fails before
+any Request.
+
 Replace that example with a known stored set and its actual field names. Then:
 
 ```sh

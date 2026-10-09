@@ -104,7 +104,10 @@ python3 /Users/darren/.agents/skills/alicit/scripts/provider-proposal.py credent
 
 For secret-name inventory, propose `{"mount":"kv","path":"metadata/PROJECT","method":"LIST","output":"keys"}`.
 LIST can print key names. Other operations print only completion metadata;
-credential fields go directly to the consumer environment. Never put secret
+credential fields go directly to the consumer environment. A GET of
+`roles/<name>` therefore shows no role body: it spends an Approval and proves
+only that the role exists. When you need a role's definition, read it from the
+tofu that codifies it, or ask the Operator. Never put secret
 values in a proposal body, Justification, or logs.
 
 A just-minted Cloudflare API token can fail for a few seconds with

@@ -24,7 +24,11 @@ build alone does not satisfy the installed-CLI gate. If host promotion cannot
 complete, report the stable release's host-delivery gap explicitly.
 
 Stage the release in a durable owner-controlled location and preserve the prior
-binary/account selector for rollback. On macOS qualify fresh-process Keychain
+binary/account selector for rollback. Use `python3 scripts/stage-cli-release.py
+--version <exact-version> --source-commit <reviewed-tag-commit>` on the native Mac
+from the release checkout. Its ledger and generated status distinguish verified
+staging from promotion; re-run identical inputs to resume. See OPERATIONS
+"Verified CLI staging" for prerequisites, rollback inventory and failure recovery. On macOS qualify fresh-process Keychain
 reads, Host/Session use, configured Reporter access and a real narrow Invocation
 before atomically switching the global executable. Ad-hoc binaries have different
 code identities; never overwrite or re-sign the working enrolled executable as
