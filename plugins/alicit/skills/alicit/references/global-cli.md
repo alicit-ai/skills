@@ -8,6 +8,10 @@ source feature is installed. On the release Mac the supported path is
 when it reports `dev`. A successful command from a worktree does not refresh the
 global installation. Do not place an experimental binary earlier on PATH.
 
+`alicit run` warns on stderr, and `alicit doctor` reports `vault_release` as
+`warn` (`version_skew`), when the CLI and the alicit Vault are different
+releases. Treat an older CLI as a host to upgrade, not as a reason to retry.
+
 Use installed help to choose the catalog and Request outcome commands. Where
 supported, `alicit doctor --catalog --json` returns metadata without a Request; coverage
 is not a grant or readiness proof. Use the narrow server-owned Profile and exact

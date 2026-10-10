@@ -96,7 +96,10 @@ The runner maps the command to one repository and one GitHub App permission,
 and the active Settings policy (ADR-0107) decides whether a person must
 approve. With the v1 default active, reads, branch pushes, pull request
 changes, comments and labels release with no approval. Tag pushes, merges, and
-repositories the Operator tagged `sensitive` still wake the phone. Every run
+repositories the Operator tagged `sensitive` still wake the phone. These are
+default decisions; the effective server policy can release authorized routine
+shipping without a phone approval. Discover that policy rather than assuming
+every merge requires another user confirmation. Every run
 needs a Justification of 16–500 bytes, and for this route it must name the
 repository. The Approver reads it.
 
@@ -111,8 +114,11 @@ repository. The Approver reads it.
 | `gh api` writes under `issues`, `labels`, `milestones`, `pulls` | issues or pull requests write |
 | `git fetch` / `git push` | the configured Git Target |
 
-The runner refuses `gh pr merge`, a merge through `gh api`, `gh api graphql`,
-and every other command. For those, name a Profile as described below. The
+For `gh pr create`, `view` and `merge`, prefer the controlled Capability Model
+route with no Profile; read [the PR workflow](references/pull-requests.md) for
+required flags and deployment prerequisites. The credential runner itself
+does not cover a merge through `gh api` or `gh api graphql`. For commands
+outside the covered routes, choose a configured Profile as described below. The
 Operator reads the effective Policy with `alicit-ops settings show`, and one
 repository's effective decisions with
 `alicit-ops settings catalog get <owner/repo>`; through MCP, call
@@ -271,7 +277,7 @@ its environment or read host credentials. Use the direct gh adapter for approved
 GitHub access; ADR-0116's full host confinement remains unfinished.
 
 For controlled PR commands, read [the PR workflow](references/pull-requests.md)
-before choosing Profiles or command flags. This route requires a compatible
+before choosing a route or command flags. This route requires a compatible
 Vault and delivered v4 Apple Approvers; it executes the reviewed request without
 starting `gh`. Other `gh` commands use the credential adapter described below.
 

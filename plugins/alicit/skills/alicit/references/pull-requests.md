@@ -4,33 +4,40 @@ Use this route only after the compatible Vault, trusted CLI and processed
 Internal TestFlight build are delivered. Source support and local fixtures are
 not production readiness. Do not replace or re-sign the installed CLI to try it.
 
-The controlled adapter supports `gh pr create`, `view` and `merge` for
-`alicit-ai/alicit`. Always supply `--repo alicit-ai/alicit`, exactly one
-matching Profile, and a Justification naming the action and repository. The
-adapter sends one reviewed API operation itself; it never starts `gh`.
+The controlled adapter supports `gh pr create`, `view` and `merge`. Prefer
+`alicit run` with no Profile when the deployed active Capability Model covers
+the operation. Always supply `--repo <owner/repo>` and a Justification naming
+the action and repository. The model's target reader determines the supported
+repositories; the effective server policy determines whether approval is
+required. A supported repository is not automatically an access grant.
 
-| Action | Profile | Required inputs |
+The legacy `github-alicit-pr-*` Profile route is restricted to
+`alicit-ai/alicit`. Use exactly one matching configured Profile only when that
+route is appropriate. Both controlled routes send one reviewed API operation
+themselves; neither starts `gh`.
+
+| Action | Legacy Alicit-only Profile | Required inputs |
 |---|---|---|
 | `pr create` | `github-alicit-pr-create` | `--head`, `--base`, `--title`, and exactly one `--body` or `--body-file`; optional `--draft` |
 | `pr view` | `github-alicit-pr-read` | Explicit numeric PR number; selected JSON output is automatic |
 | `pr merge` | `github-alicit-pr-merge` | Explicit numeric PR number, full lowercase `--match-head-commit`, one `--merge`, `--squash` or `--rebase` |
 
-Each action runs through `alicit run` with its one Profile. Pass multiline text
-with `--body-file`:
+For the Capability Model route, omit Profile and TTL overrides. Pass multiline
+text with `--body-file`:
 
 ```sh
-alicit run --profile github-alicit-pr-create --ttl github-alicit-pr-create=5m \
-  --justification "Create one PR in alicit-ai/alicit from <branch> into main to <purpose>" \
-  -- gh pr create --repo alicit-ai/alicit --head <branch> --base main \
+alicit run \
+  --justification "Create one PR in <owner/repo> from <branch> into main to <purpose>" \
+  -- gh pr create --repo <owner/repo> --head <branch> --base main \
      --title "<conventional title>" --body-file body.md
 
-alicit run --profile github-alicit-pr-read --ttl github-alicit-pr-read=5m \
-  --justification "View PR <n> in alicit-ai/alicit to <purpose>" \
-  -- gh pr view <n> --repo alicit-ai/alicit
+alicit run \
+  --justification "View PR <n> in <owner/repo> to <purpose>" \
+  -- gh pr view <n> --repo <owner/repo>
 
-alicit run --profile github-alicit-pr-merge --ttl github-alicit-pr-merge=5m \
-  --justification "Squash-merge PR <n> in alicit-ai/alicit at head <sha7> to <purpose>" \
-  -- gh pr merge <n> --repo alicit-ai/alicit --squash \
+alicit run \
+  --justification "Squash-merge PR <n> in <owner/repo> at head <sha7> to <purpose>" \
+  -- gh pr merge <n> --repo <owner/repo> --squash \
      --match-head-commit <full-sha> --subject "<title> (#<n>)" --body-file msg.md
 ```
 
@@ -42,8 +49,10 @@ under a new name and open a new PR. To keep the same PR, merge the base into
 the branch and push that normally. Give the merge commit a Conventional subject
 such as `chore: merge main into <topic>`: the release gate rejects Git's own
 `Merge branch` subject, and a squash merge leaves the commit off `main`.
-Closing a PR is outside this adapter; use `alicit run -- gh pr close` with a
-Justification that names its installation-wide GitHub authority.
+Closing a PR is outside this controlled adapter; use `alicit run -- gh pr close`
+with an explicit `--repo` and repository-naming Justification through the
+credential runner. Name installation-wide GitHub authority only when the
+selected fallback actually requires it.
 
 For merge or squash, also supply `--subject` and exactly one `--body` or
 `--body-file` for the commit text. Rebase rejects those flags and preserves
