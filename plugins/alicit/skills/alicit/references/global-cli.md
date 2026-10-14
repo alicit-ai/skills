@@ -44,10 +44,11 @@ exporting credentials. Developer ID signing is the intended unattended update
 path; its first transition still requires qualification. App signing jobs consume
 the qualified installed CLI and must not rebuild it mid-release.
 
-After promotion run the version/identity checks and a scoped operation using plain
-`alicit` from an agent shell; verify rollback is usable. Refresh this skill from
-its versioned `skills/alicit` source with the supported installer, checking its
-packaged references. Never call an installed cache edit a published skill update.
+`python3 scripts/promote-cli-release.py --version <v> --source-commit <commit>
+--repository <clone>` does the qualification, the switch, the skill refresh from
+the exact release commit and the checks after the switch, and rolls back by
+itself if a check fails (OPERATIONS "CLI promotion"). Its `status.md` names the
+outcome. Never call an installed cache edit a published skill update.
 
 ## Provider and transport failures
 

@@ -173,6 +173,17 @@ own run: a `gh` inside `bash -c` does not get the approved token, and it
 can silently run as a stored `gh` login (see the adapter limits below). The CLI writes Request progress to stderr, so redirect only stdout
 to a data file: `> out.json`, not `> out.json 2>&1`.
 
+A background job with no person present must add `--unattended` (ADR-0126).
+The run then never wakes the Operator: no Sign-in Request, no enroll, and no
+Approval card. If it would need a person, it exits 75 and says why. Treat 75
+as "try again after the Operator signs in", never as a failed command:
+
+```sh
+alicit run --unattended \
+  --justification "Fetch main of darren-iac/iac destination refs/remotes/origin/main for a background refresh" \
+  -- git fetch https://github.com/darren-iac/iac.git refs/heads/main:refs/remotes/origin/main
+```
+
 `alicit run -- gh` with no Profile takes the first route that describes the
 command: the active Capability Model, then the one-repository adapter, then
 the installation-wide fallback below. For the one-repository route, the
