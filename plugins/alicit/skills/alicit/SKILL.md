@@ -173,7 +173,10 @@ own run: a `gh` inside `bash -c` does not get the approved token, and it
 can silently run as a stored `gh` login (see the adapter limits below). The CLI writes Request progress to stderr, so redirect only stdout
 to a data file: `> out.json`, not `> out.json 2>&1`.
 
-A background job with no person present must add `--unattended` (ADR-0126).
+A background job, a poll loop or a watch script must add `--unattended`
+(ADR-0126). On exit 75, end this pass and try again on a later one; any other
+non-zero exit is an ordinary failure, for example a Vault that did not give a
+usable answer.
 The run then never wakes the Operator: no Sign-in Request, no enroll, and no
 Approval card. If it would need a person, it exits 75 and says why. Treat 75
 as "try again after the Operator signs in", never as a failed command:
