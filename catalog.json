@@ -14,12 +14,12 @@
     {
       "name": "alicit",
       "displayName": "alicit",
-      "version": "1.23.0",
+      "version": "1.23.1",
       "source": {
         "repository": "alicit-ai/alicit",
         "path": "skills/alicit",
-        "tag": "v1.23.0",
-        "commit": "aa00d8bc2f6ee5fb75c27b0349eed446ce3eb4d0"
+        "tag": "v1.23.1",
+        "commit": "8bfe14cd1ac3e6713aa65babed77c138f57357b5"
       },
       "description": "Run every credentialed command through alicit: the smallest Profile, the shortest TTL and a clear justification, approved by a human on their phone. Covers alicit run, alicit github, alicit git, discovery and failure triage.",
       "shortDescription": "Human-approved, short-lived credentials for agent commands",
