@@ -69,6 +69,9 @@ Write a non-secret JSON proposal, for example an AWS role with the exact native
 ```
 
 Replace placeholders with actual task targets and review the native declaration.
+Before submitting, follow [pending Approvals](pending-approvals.md): show the
+Operator the non-secret Justification, including the method/path and proposal
+SHA256 suffix the helper appends, and retain the same call while awaiting it.
 Find the helper relative to the loaded skill directory, `scripts/provider-proposal.py`.
 On brainiac it is installed at the path below and works from any repository:
 

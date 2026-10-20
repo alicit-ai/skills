@@ -131,11 +131,39 @@ For skills that use a map and child-ticket workflow:
   Fetch the database id with a separately justified wrapped
   `gh api repos/alicit-ai/alicit/issues/NUMBER --jq .id`. If dependencies
   are unavailable, use a `Blocked by: #NUMBER` line.
+- **Remove a dependency**: read back the dependency list first and use the
+  blocker's database id, not its issue number. A Profile-free DELETE is refused
+  with `deletion is never implicit; name a --profile and a --justification`.
+  Name the narrow Profile explicitly:
+  ```sh
+  alicit run --profile github-repository-exact --ttl github-repository-exact=5m \
+    --justification "Remove the superseded dependency BLOCKER from issue CHILD in alicit-ai/alicit after verifying its replacement" \
+    -- gh api repos/alicit-ai/alicit/issues/CHILD/dependencies/blocked_by/BLOCKER_DATABASE_ID --method DELETE
+  ```
+  This supported credential route derives `issues=write` for one repository
+  under a configured owner. It does not confine the token to just that edge.
+  A configured static issue-write Profile that covers that repository also works
+  (`github-issues` covers `alicit-ai/alicit`). Read back the dependencies after
+  the call; when replacing an edge, verify the new edge before removing the old.
+  If no narrow route covers the repository, the separately justified fallback is:
+  ```sh
+  alicit run --profile github-operator-all --ttl github-operator-all=5m \
+    --justification "Use installation-wide GitHub authority to remove superseded dependency BLOCKER from issue CHILD in OWNER/REPO after verifying its replacement" \
+    -- gh api repos/OWNER/REPO/issues/CHILD/dependencies/blocked_by/BLOCKER_DATABASE_ID --method DELETE
+  ```
+  That fallback remains installation-wide even though the endpoint names one
+  repository. Preserve explicit deletion authorization; a Profile-free retry or
+  broader token does not repair a missing dependency or an unknown mutation
+  outcome. Read the outcome before retrying an ambiguous response.
 - **Frontier query**: list open children through the wrapped list convention,
   discard assigned tickets and those with open blockers, and take the first in
   map order.
-- **Claim**: the first write is a separately justified
-  `alicit run --profile github-issues --ttl github-issues=5m --justification "Assign issue NUMBER in alicit-ai/alicit to this agent for the scoped implementation" -- gh issue edit NUMBER --repo alicit-ai/alicit --add-assignee @me`.
+- **Claim**: use the explicitly known human driver's GitHub login in a
+  separately justified write:
+  `alicit run --profile github-issues --ttl github-issues=5m --justification "Assign issue NUMBER in alicit-ai/alicit to HUMAN_LOGIN for the scoped implementation" -- gh issue edit NUMBER --repo alicit-ai/alicit --add-assignee HUMAN_LOGIN`.
+  Replace `HUMAN_LOGIN` with that known login; ask if it is unknown. GitHub App
+  installation tokens do not support the `@me` claim shorthand. Keep the
+  installation-token route rather than requesting a user token to work around it.
 - **Resolve**: use separately justified wrapped commands to comment with the
   answer, close the child, and append the durable context pointer to the map's
   Decisions-so-far.

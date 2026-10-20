@@ -77,6 +77,10 @@ prints the route, the Profiles and the TTLs. It makes no Request.
 
 ## Run a command
 
+Before a user-initiated command that may need Approval, show its non-secret
+Justification to the Operator and read [pending Approvals](references/pending-approvals.md)
+for asynchronous waits and unanswered Requests.
+
 For GitHub work, use the Settings runner first. It needs no Profile and no TTL:
 
 ```sh
@@ -106,7 +110,7 @@ repository. The Approver reads it.
 | Command | Permission on the one repository |
 |---|---|
 | `gh issue ...`, `gh label ...` | issues read or write |
-| `gh pr list`, `view`, `diff`, `status`, `checks` | pull requests read |
+| `gh pr list`, `view`, `status`, `checks` | pull requests read |
 | `gh pr create`, `edit`, `comment`, `close`, `reopen`, `ready`, `review` | pull requests write (cannot push or merge) |
 | `gh run list`, `view`, `watch`, `download`; `gh workflow list`, `view` | actions read |
 | `gh repo view`; `gh release list`, `view`, `download` | contents read |
@@ -173,7 +177,7 @@ own run: a `gh` inside `bash -c` does not get the approved token, and it
 can silently run as a stored `gh` login (see the adapter limits below). The CLI writes Request progress to stderr, so redirect only stdout
 to a data file: `> out.json`, not `> out.json 2>&1`.
 
-A background job, a poll loop or a watch script must add `--unattended`
+Scheduled automation, a poll loop or an autonomous watch must add `--unattended`
 (ADR-0126). On exit 75, end this pass and try again on a later one; any other
 non-zero exit is an ordinary failure, for example a Vault that did not give a
 usable answer.
@@ -315,11 +319,16 @@ A `gh api` command must name its HTTP method with `--method` whenever it passes
 POST, and Alicit rejects the command rather than approve a write that reads
 like a read.
 
-Eleven GitHub adapter limits fail quietly or with a misleading message:
+Twelve GitHub adapter limits fail quietly or with a misleading message:
 
 - `gh pr checks` fails with `Resource not accessible by integration`
   (`statusCheckRollup`): the App token cannot read check rollups. Read CI with
   `gh run list --branch <branch>` and `gh run view <id> --json jobs` instead.
+- `gh pr diff` fails with `HTTP 403: Resource not accessible by integration`
+  after the Request completes: the pull requests read token has no contents
+  read (#466). Fetch the head branch through the controlled Git route
+  (`alicit run -- git fetch https://github.com/<owner>/<repo>.git
+  refs/heads/<branch>:refs/remotes/origin/<name>`) and run `git diff` locally.
 - A `gh api` endpoint outside the runner table (for example
   `repos/<owner>/<repo>/hooks`) is refused by the runner. Use
   `alicit run --profile github-operator-all -- gh api ...` for it.
@@ -336,8 +345,14 @@ Eleven GitHub adapter limits fail quietly or with a misleading message:
   `alicit run -- git push`.
 - A query string in the endpoint, such as
   `gh api "repos/<owner>/<repo>/actions/runs?head_sha=<sha>"`, is refused with
-  `GitHub API endpoint contains an unsafe path segment`. Pass each parameter as
+  `GitHub API endpoint contains a query string`. Pass each parameter as
   a field instead: `gh api repos/<owner>/<repo>/actions/runs --method GET -f head_sha=<sha>`.
+  A path segment with a character outside `A-Za-z0-9_.-` is refused with
+  `GitHub API endpoint contains an unsafe path segment`. This includes a
+  branch name with an encoded slash (`branches/research%2Flearnings`). To read
+  such a branch, list it by prefix:
+  `gh api repos/<owner>/<repo>/git/matching-refs/heads/research --method GET`.
+  Keep stderr: with `2>/dev/null` the refusal looks like a missing branch.
 - `gh api repos/<owner>/<repo>/actions/jobs/<id>/logs --method GET` prints
   nothing and says `the response contains terminal escape sequences`. Add
   `--allow-escape-sequences`, write the log to a file, and strip the codes
