@@ -10,8 +10,10 @@ permissions:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: arc-runners-alicit
     steps:
+      - name: Verify the owned runner
+        run: test "$RUNNER_ENVIRONMENT" = self-hosted
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5.1.0
         with:
           persist-credentials: false
