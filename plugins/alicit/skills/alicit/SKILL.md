@@ -128,7 +128,13 @@ repository's effective decisions with
 `alicit-ops settings catalog get <owner/repo>`; through MCP, call
 `alicit_settings` and `alicit_catalog`.
 
-For work outside the runner:
+For direct `aws`, `bao` and `vault` commands, use command-derived access when
+the installed CLI and server support it. Do not add a Profile or an access file:
+native selectors resolve against server-owned destinations and ceilings. Read
+[command-derived access](references/command-access.md) for its rollout gate,
+expiry and refusal behavior. Wrangler remains a follow-up.
+
+For work outside the covered command routes:
 
 1. Choose a configured Profile for the task. Prefer an existing exact Profile,
    but do not block on creating one: the Operator-authorized broad proposal

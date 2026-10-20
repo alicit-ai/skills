@@ -222,6 +222,14 @@ Issuance still depends on the upstream permissions the configured installation
 holds. If the App lacks the org permission the call returns an upstream denial,
 which is the real "not authorised" signal — unlike the adapter refusal above.
 
+## Kubernetes credential lifetimes
+
+For `k8s/creds/<role>`, request at least `600s`: Kubernetes
+[TokenRequest requires a ten-minute minimum](https://kubernetes-csi.github.io/docs/token-requests.html).
+A shorter lifetime can fail after native preparation; follow the retained-outcome
+workflow before a fresh proposal. Keep the actual token lifetime distinct from
+the outer Invocation lifetime.
+
 ## Pushing workflow files
 
 The GitHub App refuses a Git push that touches `.github/workflows/` without the
