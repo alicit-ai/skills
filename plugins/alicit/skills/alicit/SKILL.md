@@ -110,7 +110,7 @@ repository. The Approver reads it.
 | Command | Permission on the one repository |
 |---|---|
 | `gh issue ...`, `gh label ...` | issues read or write |
-| `gh pr list`, `view`, `status`, `checks` | pull requests read |
+| `gh pr list`, `view`, `status`, `checks` (warns before a Request) | pull requests read |
 | `gh pr create`, `edit`, `comment`, `close`, `reopen`, `ready`, `review` | pull requests write (cannot push or merge) |
 | `gh run list`, `view`, `watch`, `download`; `gh workflow list`, `view` | actions read |
 | `gh repo view`; `gh release list`, `view`, `download` | contents read |
@@ -321,9 +321,17 @@ like a read.
 
 Twelve GitHub adapter limits fail quietly or with a misleading message:
 
-- `gh pr checks` fails with `Resource not accessible by integration`
-  (`statusCheckRollup`): the App token cannot read check rollups. Read CI with
-  `gh run list --branch <branch>` and `gh run view <id> --json jobs` instead.
+- `gh pr checks` prints a warning before any Sign-in or credential Request:
+  the App token cannot read `statusCheckRollup` (`Resource not accessible by
+  integration`). This is check-rollup access, not an Approval or Provider
+  readiness failure. The warning does not change the command's authority or
+  stop its execution. Read the PR's identity and current head with an explicit
+  GET of `repos/<owner>/<repo>/pulls/<number>`, then use repository-scoped
+  `gh run list` and `gh run view` calls. Compare each returned `headSha`
+  (REST `head_sha`) with the PR's `head.sha` before judging CI; a filter alone
+  is not proof. Actions results do not enumerate all non-Actions required
+  checks. See [read CI with repository-scoped Actions](references/github-runner.md)
+  for complete commands. Do not request broader authority for check rollups.
 - `gh pr diff` fails with `HTTP 403: Resource not accessible by integration`
   after the Request completes: the pull requests read token has no contents
   read (#466). Fetch the head branch through the controlled Git route
@@ -366,8 +374,9 @@ Twelve GitHub adapter limits fail quietly or with a misleading message:
   integration (repository.pullRequest.mergeCommit)`. Request `state,mergedAt`
   instead. After an uncertain `gh pr merge`, read that state before any retry:
   a merge that a second call reports as `already merged` did succeed.
-- `gh api --paginate` prints nothing through the runner. Read one page per
-  call with `-f per_page=100 -f page=<n>`.
+- `gh api --paginate` is refused before authentication while its reported
+  empty output remains unresolved (#408). Read one page per call with the
+  endpoint immediately after `api` and `--method GET -f per_page=100 -f page=<n>`.
 - A `gh api .../actions/runs -f head_sha=<sha>` result can hold runs of other
   commits. Keep only `select(.head_sha == "<sha>")` before you judge CI, and
   wait until each expected workflow appears.

@@ -40,15 +40,17 @@ mount locally, before any Approval:
 
 ```sh
 python3 - <<'PY'
-import importlib.util, json, subprocess
+import importlib.util
 spec = importlib.util.spec_from_file_location("pp", "<skill>/scripts/provider-proposal.py")
 pp = importlib.util.module_from_spec(spec); spec.loader.exec_module(pp)
-mounts = [p["path"] for p in json.loads(subprocess.check_output(["alicit", "discover", "--json"]))["providers"]]
+mounts = pp.catalog_mounts(pp.read_catalog("alicit"))
 pp.validate({"mount": "secret", "path": "metadata/ci", "method": "LIST", "output": "keys"}, mounts)
 PY
 ```
 
-`ValueError: select a discovered secrets backend` means no proposal can reach it.
+`select a discovered secrets backend` means local preflight stopped before an
+Invocation; no Alicit Request was created. Select a mount in the catalog or use
+the owning Vault's supported workflow.
 
 ## Submit
 
@@ -147,9 +149,23 @@ the old one.
 ## Outcomes
 
 The helper sends each native operation once and never retries automatically.
-An HTTP failure reports only its safe numeric status, not the Provider response
-body or arbitrary error text. A failed proposal keeps that status and names the
-status lookup; it does not replace the diagnostic with a generic failure.
+Its failure messages identify the stage:
+
+- **Local preflight failed:** the declaration, expanded Justification, catalog,
+  or Invocation launch failed before submission. The message gives a fixed safe
+  reason and states that no Alicit Request was created. Correct that input or
+  local configuration before submitting. The expanded Justification must fit
+  16–500 UTF-8 bytes including the appended method/path and SHA256 suffix.
+- **Invocation stage did not complete:** Alicit started and returned a failure.
+  Preserve its diagnostic and any Request IDs. If it printed no ID, Request
+  creation remains unconfirmed; a failure alone does not prove that no Request
+  exists.
+- **Native Provider stage failed:** the approved child reached the native
+  operation stage. HTTP failures expose only their safe numeric status; other
+  failures use fixed reasons. Provider response bodies, credential values and
+  arbitrary exception text are suppressed. A native failure can appear together
+  with the outer Invocation failure.
+
 Preserve the Request IDs printed by Alicit and use
 `alicit doctor --request <request-id>`, with `--json` for a machine-readable
 record, for passive observation when supported by the installed CLI. The lookup
