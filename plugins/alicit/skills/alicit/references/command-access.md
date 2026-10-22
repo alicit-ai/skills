@@ -43,3 +43,16 @@ authority; this feature does not confine a child to an exact command.
 
 Wrangler support is researched and deferred. Follow the configured existing
 Provider route for it rather than inventing command-derived coverage.
+
+Kubernetes command access requires compatible review-12 delivery and explicit
+signed activation; source support alone grants nothing. Use
+`alicit run --justification "Read the owned canary ConfigMap in etcdrich" -- kubectl --context etcdrich -n alicit-kubectl-canary get configmap/canary`.
+Context aliases and default namespaces are server owned. An optional alicit
+`--duration` keeps runs at 600–3,600 whole seconds, default 600. Review and Policy
+include another 60 seconds of JWT expiry tolerance and 10 seconds of successful
+authentication caching in the native ceiling. Credentials use a token-free
+kubeconfig and a memory broker; local kubeconfig authentication is isolated.
+Tagged Hosts require explicit Kubernetes Host Grants. Never bypass a refusal
+through a shell, Profile or another context. See the
+[Kubernetes contract](https://github.com/alicit-ai/alicit/blob/main/docs/specs/kubectl-command-access.md)
+for supported commands, frozen inputs and qualification gates.
