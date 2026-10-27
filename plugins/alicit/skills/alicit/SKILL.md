@@ -45,15 +45,18 @@ source changes and published archives alone do not update it.
 
 For every Docker or Compose build on Alicit's ephemeral ARC runners, check out
 the repository and use `./.github/actions/setup-docker-build`. A pull-only job
-passes the read-only `DOCKERHUB_READ_USERNAME` and `DOCKERHUB_READ_TOKEN`; only
-an image-publishing job passes the push token `DOCKERHUB_USERNAME` and
-`DOCKERHUB_TOKEN`, because a CI job runs pull request code. It authenticates
+first runs `./.github/actions/dockerhub-pull-login`, which reads the read-only
+Docker Hub token from the Cluster Vault over GitHub OIDC (no GitHub secret;
+the job needs `id-token: write`); only an image-publishing job passes the push
+token `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`, because a CI job runs pull
+request code. It authenticates
 the fresh DinD daemon before creating Buildx, covering cold base-image and
 Compose service-image pulls that BuildKit cannot restore. Pull-only CI treats
 unavailable authentication as a warning so a temporary Docker Hub lockout does
 not block validation; image-publishing jobs set `dockerhub-login-required:
 "true"` and must fail without a working login. A reusable workflow that runs
-CI must declare `secrets: inherit` when these repository secrets are needed.
+CI must grant `id-token: write` to the calling job, and declare
+`secrets: inherit` when the push secrets are needed.
 
 Keep each `docker/build-push-action` cache explicit at its call site with a
 dedicated `type=gha` scope and `mode=max`; image stages are distinct cache
@@ -419,7 +422,7 @@ of the same owner.
 | `alicit-ai/alicit` | fetch | `refs/*` | `github-alicit-git-read` |
 | `alicit-ai/alicit` | push | `refs/heads/*`, `refs/tags/*` | `github-alicit-git-write` |
 | `darrengruber/scrim` | fetch | `refs/*` | `github-scrim-git-read` |
-| `darrengruber/scrim` | push | `refs/heads/main` | `github-scrim-git-write` |
+| `darrengruber/scrim` | push | `refs/heads/*` | `github-scrim-git-write` |
 | any other repository under a configured owner | fetch | one explicit `refs/*` destination | `github-repository-exact` |
 | any other repository under a configured owner | push | one explicit branch or tag destination | `github-repository-exact` |
 
@@ -448,8 +451,8 @@ The second target uses its own Profile and its own destination:
 alicit run \
   --profile github-scrim-git-write \
   --ttl github-scrim-git-write=5m \
-  --justification "Push the reviewed change to darrengruber/scrim destination refs/heads/main" \
-  -- git push https://github.com/darrengruber/scrim.git HEAD:refs/heads/main
+  --justification "Push the reviewed change to darrengruber/scrim destination refs/heads/feature-name" \
+  -- git push https://github.com/darrengruber/scrim.git HEAD:refs/heads/feature-name
 ```
 
 Use the Profile of the target you name. A Profile for one target cannot carry
