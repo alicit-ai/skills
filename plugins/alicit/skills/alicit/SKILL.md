@@ -123,7 +123,9 @@ repository. The Approver reads it.
 
 For `gh pr create`, `view` and `merge`, prefer the controlled Capability Model
 route with no Profile; read [the PR workflow](references/pull-requests.md) for
-required flags and deployment prerequisites. The credential runner itself
+required flags and deployment prerequisites. `gh pr merge` needs `--subject "<title> (#<n>)"`,
+exactly one `--body-file` (or `--body`), and `--match-head-commit <full-sha>`.
+A merge to the default branch wakes the phone, so run it without `--unattended`. The credential runner itself
 does not cover a merge through `gh api` or `gh api graphql`. For commands
 outside the covered routes, choose a configured Profile as described below. The
 Operator reads the effective Policy with `alicit-ops settings show`, and one
@@ -248,6 +250,8 @@ The Alicit GitHub Apps have no `checks` permission, so check-runs endpoints
 return 403. Read CI state from the Actions runs and jobs endpoints through the
 runner (`alicit run -- gh run view ...`). Read once after a local signal
 instead of polling.
+To wait for a SHA's runs, use `scripts/wait-for-runs.sh <owner/repo> <sha> --expect <n>`
+from alicit-ai/alicit; it applies the loop rules above.
 Redirect a log read to a file (`gh run view <id> --log-failed > run.log`) and
 search the file; piping it to `tail` discards the approval if you need another
 part of the log.
