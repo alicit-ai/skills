@@ -1,5 +1,9 @@
 # Controlled PR workflow
 
+When commit signing is enabled, merge through
+[Approved Merges](commit-signing.md). The Vault refuses the older `pr.merge`
+routes below. Creation and viewing continue through their existing adapters.
+
 Use this route only after the compatible Vault, trusted CLI and processed
 Internal TestFlight build are delivered. Source support and local fixtures are
 not production readiness. Do not replace or re-sign the installed CLI to try it.

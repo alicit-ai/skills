@@ -121,7 +121,12 @@ repository. The Approver reads it.
 | `gh api` writes under `issues`, `labels`, `milestones`, `pulls` | issues or pull requests write |
 | `git fetch` / `git push` | the configured Git Target |
 
-For `gh pr create`, `view` and `merge`, prefer the controlled Capability Model
+For certificate-signed commits and Approved Merges (ADR-0141), read
+[commit signing](references/commit-signing.md) before committing or merging.
+It identifies the activation gate and the profile-free commands. When enabled,
+the Vault refuses the older controlled `gh pr merge` routes.
+
+For `gh pr create`, `view` and pre-activation `merge`, prefer the controlled Capability Model
 route with no Profile; read [the PR workflow](references/pull-requests.md) for
 required flags and deployment prerequisites. `gh pr merge` needs `--subject "<title> (#<n>)"`,
 exactly one `--body-file` (or `--body`), and `--match-head-commit <full-sha>`.
@@ -271,7 +276,8 @@ alicit run \
   -- git push https://github.com/alicit-ai/alicit.git HEAD:refs/heads/main
 ```
 
-Local Git operations need no credential and run normally. Under the five
+Local Git inspection needs no credential and runs normally. Certificate-signed
+commits use [the signing route](references/commit-signing.md). Under the five
 configured installations, a repository needs no per-repository Profile:
 `fetch` derives `contents=read` and `push` derives `contents=write`. The
 repository must still be in that owner's GitHub App installation. When an
@@ -395,7 +401,9 @@ Twelve GitHub adapter limits fail quietly or with a misleading message:
   wait until each expected workflow appears.
 - `gh pr merge` with a Profile that has no pull request scope (for example
   `github-skills-write`) fails with `Resource not accessible by integration
-  (repository.pullRequest)`. Where no `github-<repo>-pr-merge` Profile exists,
+  (repository.pullRequest)`. After commit-signing activation, use
+  [Approved Merges](references/commit-signing.md). Before activation, where no
+  `github-<repo>-pr-merge` Profile exists,
   merge with `--profile github-operator-all` and
   `gh api repos/<owner>/<repo>/pulls/<n>/merge --method PUT -f merge_method=squash -f sha=<head>`.
   `gh workflow run` also needs `github-operator-all`; `alicit-workflows` is not
