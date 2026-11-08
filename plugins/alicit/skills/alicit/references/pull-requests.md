@@ -70,6 +70,13 @@ change. Merge requires the exact head SHA, but follows the PR's current base
 branch. It does not provide atomic base-ref enforcement. Check those semantics
 and the full text in Details before approving.
 
+For `alicit-ai/alicit` while release preparation is active, use `--squash`.
+The deployed native release bridge requires a single-parent source; a legacy
+two-parent merge cannot qualify automatic release reconciliation. If one has
+already landed, inspect publication state, then roll forward with a reviewed
+single-parent commit. Do not rewrite published history or restore the former
+repository-write publisher to recover it.
+
 Inspect the same PR after an uncertain HTTP outcome or output failure before
 creating another request. A successful PR operation followed by a cleanup error
 is not permission to repeat the mutation. A Request success alone does not prove

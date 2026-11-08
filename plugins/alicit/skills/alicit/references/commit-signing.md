@@ -1,5 +1,10 @@
 # Commit signing and Approved Merges
 
+Before activation, use the Operator-authorized temporary commit fallback at the
+top of [the Alicit skill](../SKILL.md#temporary-commit-fallback--operator-authorized-2026-11-03).
+That rollout exception ends when signing activation is verified for the target
+repository; the refusal rules below then apply.
+
 Use these commands after the compatible Vault, qualified CLI, Tenant Signing
 Authority, active Policy and repository trust/checks are delivered. Read the
 repository's activation evidence before treating source support as active.

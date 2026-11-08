@@ -1,9 +1,26 @@
 ---
 name: alicit
-description: Use whenever a human or agent command needs GitHub, cloud, infrastructure, object-storage, or 1Password credentials; when configuring a Docker-based GitHub Actions build; or when an `alicit:` failure occurs. Enforces scoped Alicit profiles, approval justifications, and sanitized issue reporting; replaces bao-exec and ambient bearer tokens.
+description: Use when making a Git commit; whenever a human or agent command needs GitHub, cloud, infrastructure, object-storage, or 1Password credentials; when configuring a Docker-based GitHub Actions build; or when an `alicit:` failure occurs. Enforces scoped Alicit profiles, approval justifications, and sanitized issue reporting; replaces bao-exec and ambient bearer tokens.
 ---
 
 # Alicit credentialed commands
+
+## Temporary commit fallback — Operator authorized 2026-11-03
+
+Until signing is qualified and activated for the target repository, use local
+`git -c commit.gpgsign=false commit -m 'feat: describe the change'` without
+`alicit run`. The Operator authorized unsigned local commits during this rollout;
+another permission request is unnecessary. This command overrides signing for
+one invocation and preserves Git configuration. Stage only the intended files.
+
+Keep authenticated fetches, pushes and pre-activation PR merges on their existing
+Alicit routes with their existing review and Approval requirements. For merges,
+follow [the PR workflow](references/pull-requests.md).
+
+This exception ends for a repository when its signing activation is verified.
+A signing or authorization refusal after activation must stop the operation;
+it does not reopen this fallback. Source support or a merged signing PR alone
+does not establish activation. See [commit signing](references/commit-signing.md).
 
 Route every credentialed command through Alicit. Never use `bao-exec`, a normal
 OpenBao login, an ambient token file, or a bearer token copied into the command
