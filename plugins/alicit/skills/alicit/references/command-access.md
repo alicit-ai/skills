@@ -1,4 +1,4 @@
-# Command-derived AWS and Bao/Vault access
+# Command-derived AWS, Bao/Vault and Kubernetes access
 
 This route requires compatible server, CLI and review-11 Approvers, configured
 Providers and a separately provisioned issuer. Source support does not establish
@@ -56,3 +56,9 @@ Tagged Hosts require explicit Kubernetes Host Grants. Never bypass a refusal
 through a shell, Profile or another context. See the
 [Kubernetes contract](https://github.com/alicit-ai/alicit/blob/main/docs/specs/kubectl-command-access.md)
 for supported commands, frozen inputs and qualification gates.
+
+When live discovery reports an ambiguous resource, use the fully qualified
+resource name from the intended API group and replan the exact command.
+Dry run cannot resolve that ambiguity against a live cluster. For named pod
+exec, use [Kubernetes exec overrides](kubernetes-exec.md) to choose per-request
+Approval, a time window, or a standing rule.

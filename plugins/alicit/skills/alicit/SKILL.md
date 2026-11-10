@@ -1,9 +1,15 @@
 ---
 name: alicit
-description: Use when making a Git commit; whenever a human or agent command needs GitHub, cloud, infrastructure, object-storage, or 1Password credentials; when configuring a Docker-based GitHub Actions build; or when an `alicit:` failure occurs. Enforces scoped Alicit profiles, approval justifications, and sanitized issue reporting; replaces bao-exec and ambient bearer tokens.
+description: Use Alicit for Git commits, GitHub, Kubernetes, cloud, object storage, 1Password, Docker CI credentials, and Alicit failures. Use it to plan access, diagnose Requests, run without waking the Operator, review or change signed Settings (including Kubernetes exec overrides), and find the supported CLI, MCP, or Approver workflow.
 ---
 
 # Alicit credentialed commands
+
+Start with the [operations index](references/operations.md) when the task
+crosses CLI, MCP, or Approver surfaces, or when the Operator asks how to use
+an Alicit feature. Read the linked workflow before choosing a command. Use
+the installed CLI and live discovery to distinguish available features,
+configured access, and authority for the exact operation.
 
 ## Temporary commit fallback — Operator authorized 2026-11-03
 
@@ -43,10 +49,9 @@ The CLI has four verbs (ADR-0120):
 | `alicit help` | prints the version and the usage |
 | `alicit doctor [--fix]` | reports what is wrong on this host; never wakes the Operator |
 
-`alicit --version` prints the version. The Operator's admin verbs (Settings,
-Policy, Capability Models, Tenants, Allowances, Host invitations, TestFlight)
-are in the separate `alicit-ops` binary, and the remote MCP server is
-`alicit-mcp`. An Agent needs neither.
+`alicit --version` prints the version. The [operations index](references/operations.md)
+shows which Operator workflows use the separate `alicit-ops` binary, which
+belong in the Approver, and what the remote MCP server can do.
 
 `alicit run` starts `alicit enroll` when this machine has no trust yet. When
 the Operator Session has expired, it sends a Sign-in Request, waits for the
@@ -84,16 +89,17 @@ depend on cache availability.
 ## Use the MCP server when it is present
 
 If your tools include `alicit_plan` and `alicit_github` (the alicit MCP server
-at `https://mcp.grubernet.es/mcp`), call `alicit_plan` before any alicit
-command. It applies the same checks as the CLI, makes no Request and wakes
-nobody, and it warns about the failures listed below. A tool that makes a
+at `https://mcp.grubernet.es/mcp`), call `alicit_plan` to check a proposed
+`alicit run`. It makes no Request and wakes nobody. Remote preflight cannot
+inspect the execution host. Run the local dry run when the plan reports
+`execution_host_checks: required`. A tool that makes a
 Request and returns `pending` gives a `call_id`: call `alicit_result` with it
 instead of repeating the call. No tool returns a credential, and no tool can
 approve. The server has no `alicit_run` or `alicit_git`, because it has no
 workspace, and only Profiles with the `mcp` audience work through it.
 
-Without the MCP server, `alicit run --dry-run` applies the same checks and
-prints the route, the Profiles and the TTLs. It makes no Request.
+Use `alicit run --dry-run` on the execution host to plan without MCP and to
+check local inputs. It prints the route, Profiles and TTLs without a Request.
 
 ## Run a command
 
@@ -155,11 +161,13 @@ repository's effective decisions with
 `alicit-ops settings catalog get <owner/repo>`; through MCP, call
 `alicit_settings` and `alicit_catalog`.
 
-For direct `aws`, `bao` and `vault` commands, use command-derived access when
+For direct `aws`, `bao`, `vault` and `kubectl` commands, use command-derived access when
 the installed CLI and server support it. Do not add a Profile or an access file:
 native selectors resolve against server-owned destinations and ceilings. Read
 [command-derived access](references/command-access.md) for its rollout gate,
-expiry and refusal behavior. Wrangler remains a follow-up.
+expiry and refusal behavior. For pod exec, one-off Approval, or standing
+unattended access, read [Kubernetes exec overrides](references/kubernetes-exec.md).
+Wrangler remains a follow-up.
 
 For work outside the covered command routes:
 
