@@ -50,6 +50,14 @@ the exact release commit and the checks after the switch, and rolls back by
 itself if a check fails (OPERATIONS "CLI promotion"). Its `status.md` names the
 outcome. Never call an installed cache edit a published skill update.
 
+For the unattended CLI patch pilot, follow OPERATIONS "Unattended CLI patch
+delivery". Verify the exact Git Writer qualification ref, tagged source and
+published artifacts before checking the enrolled Mac. The LaunchAgent uses
+`--unattended`; exit 75 leaves promotion pending with the previous CLI active.
+Read the host's `status.md` and verify the installed version and source before
+reporting completion. Resume with the next scheduled pass when the Operator
+Session is available.
+
 ## Provider and transport failures
 
 A successful approval followed by Provider HTTP 500 is not a notification failure.

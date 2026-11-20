@@ -104,13 +104,13 @@
     {
       "id": 9,
       "name": "release-skill-parity",
-      "prompt": "A release was tagged and the cask updated, but the local agent still gives old Alicit advice. How do we prove the binary and skill are current?",
+      "prompt": "An unattended patch was tagged and the cask updated, but the local updater exited 75 and the agent still gives old advice. How do we prove the binary and skill are current?",
       "expected_output": "Check installed CLI and skill separately from publication.",
       "files": [],
       "expectations": [
         "Checks the actual executable and CLI/Vault versions.",
         "Checks the release-tagged marketplace skill and local installed skill.",
-        "Uses the supported CLI qualification/promotion flow and reports any remaining gap."
+        "Treats exit 75 as pending without a Wake, keeps the previous CLI active, and verifies the promotion ledger and installed source before calling it delivered."
       ]
     },
     {
