@@ -137,7 +137,9 @@ repository. The Approver reads it.
 |---|---|
 | `gh issue ...`, `gh label ...` | issues read or write |
 | `gh pr list`, `view`, `status`, `checks` (warns before a Request) | pull requests read |
-| `gh pr create`, `edit`, `comment`, `close`, `reopen`, `ready`, `review` | pull requests write (cannot push or merge) |
+| `gh pr create`, `edit`, `comment`, `close`, `reopen`, `review` | pull requests write (cannot push or merge) |
+| `gh pr ready`, `ready --undo` | one Vault-executed transition with the active GitHub Capability Model |
+| `gh pr diff --name-only` | changed-file paths with pull requests read |
 | `gh run list`, `view`, `watch`, `download`; `gh workflow list`, `view` | actions read |
 | `gh repo view`; `gh release list`, `view`, `download` | contents read |
 | `gh api repos/<owner>/<repo>/...` with GET | chosen by the first path segment |
@@ -219,12 +221,10 @@ can silently run as a stored `gh` login (see the adapter limits below). The CLI 
 to a data file: `> out.json`, not `> out.json 2>&1`.
 
 Scheduled automation, a poll loop or an autonomous watch must add `--unattended`
-(ADR-0126). On exit 75, end this pass and try again on a later one; any other
-non-zero exit is an ordinary failure, for example a Vault that did not give a
-usable answer.
-The run then never wakes the Operator: no Sign-in Request, no enroll, and no
-Approval card. If it would need a person, it exits 75 and says why. Treat 75
-as "try again after the Operator signs in", never as a failed command:
+(ADR-0126). The run uses an existing Operator Session and credentials that
+Policy can release automatically. A missing Operator Session or a credential
+that needs Approval produces exit 75 without a Wake. End that pass and try
+again when the Operator is available. Handle other nonzero exits as failures.
 
 ```sh
 alicit run --unattended \
@@ -376,11 +376,10 @@ Twelve GitHub adapter limits fail quietly or with a misleading message:
   is not proof. Actions results do not enumerate all non-Actions required
   checks. See [read CI with repository-scoped Actions](references/github-runner.md)
   for complete commands. Do not request broader authority for check rollups.
-- `gh pr diff` fails with `HTTP 403: Resource not accessible by integration`
-  after the Request completes: the pull requests read token has no contents
-  read (#466). Fetch the head branch through the controlled Git route
-  (`alicit run -- git fetch https://github.com/<owner>/<repo>.git
-  refs/heads/<branch>:refs/remotes/origin/<name>`) and run `git diff` locally.
+- For full patch output, `gh pr diff` can fail with HTTP 403 on the PR-read
+  token. Fetch the PR's head through the controlled Git route and compare it
+  locally. Use `gh pr diff --name-only` for the repository-scoped changed-file
+  read described in the [PR workflow](references/pull-requests.md).
 - A `gh api` endpoint outside the runner table (for example
   `repos/<owner>/<repo>/hooks`) is refused by the runner. Use
   `alicit run --profile github-operator-all -- gh api ...` for it.
@@ -409,11 +408,10 @@ Twelve GitHub adapter limits fail quietly or with a misleading message:
   nothing and says `the response contains terminal escape sequences`. Add
   `--allow-escape-sequences`, write the log to a file, and strip the codes
   before you search it. GitHub serves a job's log only after the job ends.
-- `gh pr ready` fails with `Resource not accessible by integration
-  (markPullRequestReadyForReview)`: the App cannot take a pull request out of
-  draft, and REST has no equivalent. Open a pull request that must merge later
-  as a normal pull request and state the merge condition in its body. If it is
-  already a draft, close it and open a new one from the same branch.
+- `gh pr ready` requires a compatible CLI and the active draft-transition
+  Capability Model. Check that support before requesting the operation.
+  Inspect the same PR after an unconfirmed outcome. See the
+  [PR workflow](references/pull-requests.md).
 - `gh pr view --json mergeCommit` fails with `Resource not accessible by
   integration (repository.pullRequest.mergeCommit)`. Request `state,mergedAt`
   instead. After an uncertain `gh pr merge`, read that state before any retry:

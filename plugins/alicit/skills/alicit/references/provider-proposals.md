@@ -83,10 +83,19 @@ python3 /Users/darren/.agents/skills/alicit/scripts/provider-proposal.py proposa
 ```
 
 The helper freezes the proposal in memory, adds its method/path and SHA256 to
-the Justification, and invokes the enrolled `alicit` executable. The phone shows
-that Justification and native operation. It does not render every arbitrary
-backend field; the JSON artifact is the full reviewable declaration. This is the
-existing native Control Group route, not new signed typed-operation enforcement.
+the Justification, and invokes the enrolled `alicit` executable. When the Vault
+and iPhone negotiate a typed review for a supported AWS role proposal, the
+card shows the proposed change, target, readable Justification and requested
+IAM policy. Open Proposal verification for the method, path and hashes. Compare
+the proposal SHA-256 to the helper's announcement. The Vault separately binds
+the actual Provider body hash to the Request.
+
+Earlier Approvers show the existing method, path and Justification. Keep the
+full non-secret declaration available to the Operator. If the typed card
+cannot show a supported declaration completely, the Operator cannot approve
+it through that card. Read the original Request outcome with
+`alicit doctor --request <id>` before deciding how to proceed. After approval,
+verify the intended role and policy with an independently authorized read.
 
 The frozen, non-secret proposal travels as an encoded child-process argument;
 the helper does not consume caller stdin. A consumer after `--` inherits that

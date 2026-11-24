@@ -45,6 +45,42 @@ alicit run \
      --match-head-commit <full-sha> --subject "<title> (#<n>)" --body-file msg.md
 ```
 
+## Prepare a PR for review
+
+Use the shipped CLI and the active GitHub Capability Model for draft changes.
+Specify the numeric PR and repository. Name the repository and intended change
+in the Justification. Routine writes can proceed without a Wake when the
+effective Settings, Host Grant and Policy permit them. An Approval identifies
+the PR and the requested direction. For unattended work, exit 75 means the
+operation needs a person and the pass ends.
+
+```sh
+alicit run --justification "List changed paths on PR 123 in owner/repo for review" \
+  -- gh pr diff 123 --name-only --repo owner/repo
+
+alicit run --justification "Mark PR 123 in owner/repo ready for review after verification" \
+  -- gh pr ready 123 --repo owner/repo
+
+alicit run --justification "Return PR 123 in owner/repo to draft while revising it" \
+  -- gh pr ready 123 --undo --repo owner/repo
+```
+
+The file list uses repository-scoped PR read authority. GitHub's changed-files
+endpoint caps the inventory at 3,000 files. The command reports when it cannot
+verify a complete list and leaves standard output empty.
+
+The alicit Vault performs the state transition and confirms the resulting
+state on the same PR. An open PR already in the requested state succeeds
+without a mutation. For an uncertain outcome, use a fresh PR read and check
+its number, URL, open state and draft status before considering another
+Invocation. If the CLI reports incompatible or inactive server support, check
+the installed CLI and the Vault's active model. Older CLIs may still use the
+legacy GitHub credential route for `gh pr ready`. The server-custodied route
+requires the compatible CLI and active model together. If the effective policy
+refuses the transition, inspect the Request outcome. Keep the original PR.
+
+## Merge and recovery
+
 A merge that reports `did not confirm success (HTTP 405)` did not merge. The
 usual cause is a conflict with the current base; view the PR, fetch the base
 and test the merge (`git merge-tree --write-tree origin/main <branch>`) before

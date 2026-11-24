@@ -92,12 +92,12 @@
     {
       "id": 8,
       "name": "testflight-assignment",
-      "prompt": "The uploader reported success, but the workflow failed before the TestFlight group assignment. How do we finish this exact build?",
-      "expected_output": "Verify and assign the existing processed build.",
+      "prompt": "The ordinary TestFlight workflow timed out during upload. How do we recover without uploading the same release twice?",
+      "expected_output": "Use the pending attempt record to reconcile the exact upload, then finish with assignment only when Apple received the build.",
       "files": [],
       "expectations": [
-        "Inspects App Store Connect for the exact build before retrying.",
-        "Uses assignment-only recovery when the upload already happened.",
+        "Checks the held attempt's app ID, source SHA, version and selected build number before inspecting App Store Connect.",
+        "Keeps the hold when transport is uncertain and uses assignment-only recovery when Apple received the exact build.",
         "Confirms the processed build is visible to Internal testers."
       ]
     },
@@ -123,6 +123,60 @@
         "Explains that dry run does not query live resource discovery.",
         "Identifies the intended API group before planning the qualified resource name.",
         "Avoids broadening authority or retrying the ambiguous invocation."
+      ]
+    },
+    {
+      "id": 11,
+      "name": "draft-pr-review-handoff",
+      "prompt": "PR 123 in owner/repo is a draft. I need its changed paths, then want it ready for review. What if approval is required, the Vault does not support it, or the response times out? How would I return it to draft?",
+      "expected_output": "Plan narrowly scoped PR inspection and verified, recoverable draft transitions.",
+      "files": [],
+      "expectations": [
+        "Uses alicit run with explicit repository and PR number for gh pr diff --name-only, gh pr ready and gh pr ready --undo.",
+        "Checks active Capability Model support and distinguishes a routine write, an Approval, and a refusal without escalating credentials.",
+        "Verifies the resulting state against the same PR and reads back an uncertain mutation before another Request.",
+        "Preserves the PR and its discussion and treats an incomplete changed-file response as partial evidence."
+      ]
+    },
+    {
+      "id": 12,
+      "name": "iam-proposal-review",
+      "prompt": "An AWS role proposal for read access to one bucket prefix is waiting on my iPhone. Where can I verify the exact policy and what should I do if the card says the review is unavailable?",
+      "expected_output": "Compare the proposed role, policy condition and proposal hash to the original frozen declaration, then observe the same Request.",
+      "files": [],
+      "expectations": [
+        "Uses the typed card's requested IAM policy and Proposal verification when available.",
+        "Distinguishes the helper's proposal hash from the Vault's digest of the exact Provider body.",
+        "Consults the existing Request outcome instead of bypassing an unavailable review or automatically submitting another Request.",
+        "Verifies the approved role and policy through an authorized fresh read."
+      ]
+    },
+    {
+      "id": 13,
+      "name": "enrolled-host-ciba-poll-recovery",
+      "prompt": "On the disposable CIBA-enrolled Host, my normal alicit run opened a credential Approval and the Poll response timed out. The Operator has now put Host Poll into drain. How do I check what happened without another Wake or duplicate Provider action? What would an unattended run do if the Operator Session is still valid but the credential needs Approval?",
+      "expected_output": "Reconcile the original admitted Host Request, verify the Provider outcome and pause new Host Poll work during drain.",
+      "files": [],
+      "expectations": [
+        "Keeps the normal alicit run and existing Approver workflow and identifies the issuer saved at explicit Host Enrollment.",
+        "Recognizes that the CLI polls the same Request across a lost token response and that a signed approval alone does not prove Provider execution.",
+        "Explains that drain refuses new admission while admitted Requests can complete, and pauses new work until the Operator reopens admission or re-enrolls the Host on the legacy path.",
+        "Explains that a Policy requiring the paired iPhone selects that existing approval route before CIBA admission.",
+        "Uses alicit doctor --request with the original Request ID and checks the Provider outcome before another Invocation.",
+        "Recognizes that an unattended credential refusal exits 75 without a Wake even with a valid Operator Session, ends that pass and avoids collecting keys, assertions or grants."
+      ]
+    },
+    {
+      "id": 15,
+      "name": "staged-vault-image-promotion",
+      "prompt": "We have a qualified immutable Vault image. Can you roll it to Staging before Hosted if the current tailnet Vault still serves my credentials, and what do we do if the build gate sees different pins?",
+      "expected_output": "Establish the reviewed rollout target, verify isolation and preserve the rollback plugin.",
+      "files": [],
+      "expectations": [
+        "Consults the Vault image rollout runbook and verifies both live Vault identities before treating the tailnet Vault as Staging.",
+        "Renders all three Flux app paths, accounts for the MCP server and Git Writer on the current pin, and requires evidence that the intended change targets one installation.",
+        "Reports the gate refusal and uses the tested candidate digest for promotion or the prior pin for rollback through the reviewed change path.",
+        "Uses voter image digests, reconciler status, serving plugin checksum and the smoke test as promotion evidence."
       ]
     }
   ]
