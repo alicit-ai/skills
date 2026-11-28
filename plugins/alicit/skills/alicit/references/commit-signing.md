@@ -41,6 +41,15 @@ with a current covering autonomous Host Grant. The command signs a one-parent
 commit and pushes with the reviewed base as its lease. The checkout and index
 remain unchanged.
 
+For a full Git Writer qualification in `alicit-ai/alicit`, inspect the CI run
+for the reviewed PR head and base. Its `schema` job must finish successfully.
+If the job is missing or skipped, inspect the trusted workflow and its
+`changes` prerequisite. Retry a failed or cancelled prerequisite on the
+current head and base. Repair missing job coverage or incorrect selection in
+the trusted workflow, then requalify. If it reports stale outputs, regenerate
+with `go generate ./internal/access`, commit the outputs, and qualify the new
+head. An ordinary path-filtered PR run can skip `schema` for unrelated files.
+
 After an uncertain push result, inspect the remote and retained
 `refs/alicit/approved-merges/<commit>` before making another Request. A stale
 head or base requires fresh review. A completed Request alone is not proof

@@ -15,6 +15,26 @@ the action and repository. The model's target reader determines the supported
 repositories; the effective server policy determines whether approval is
 required. A supported repository is not automatically an access grant.
 
+### Choose draft status before creation
+
+When you expect to mark your own draft ready, check the installed binaries and
+the active Capability Model before passing `--draft`. The numeric PR below is
+only an input to the local dry run. For an existing draft, use its real number.
+
+```sh
+alicit run --unattended --dry-run --json \
+  --justification "Check draft support for the release PR in alicit-ai/alicit" \
+  -- gh pr ready 1 --repo alicit-ai/alicit |
+  jq -e 'any(.operations[]?; .capability == "pr.ready")'
+alicit-ops capabilities show --json |
+  jq -e '.found and any(.model.revision.models[]? | select(.provider == "github") |
+    .operations[]?; .id == "pr.ready" and .transport == "server")'
+```
+
+If either check is unavailable and the work is ready for review, create the PR
+ready. If a draft is required, agree who can mark it ready. Keep an existing
+draft and its review history. After a transition, read the same PR back.
+
 The legacy `github-alicit-pr-*` Profile route is restricted to
 `alicit-ai/alicit`. Use exactly one matching configured Profile only when that
 route is appropriate. Both controlled routes send one reviewed API operation

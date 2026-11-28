@@ -80,11 +80,12 @@
     {
       "id": 7,
       "name": "git-delivery",
-      "prompt": "A PR is green, but our repo is mid-migration to Approved Merges. Walk me through deciding which merge route is live and proving the change landed.",
+      "prompt": "A PR is green, but our repo is mid-migration to Approved Merges. The full Git Writer qualification is missing the schema job. How do I choose the live merge route, resolve that result and prove the change landed?",
       "expected_output": "Select the live approved merge path and verify its effect.",
       "files": [],
       "expectations": [
         "Checks live activation and chooses the supported merge path.",
+        "Requires the schema job to succeed on full Git Writer qualification, checks the changes prerequisite, distinguishes transient run failures from missing workflow coverage, and requalifies the exact head and base.",
         "Binds the operation to the reviewed PR head and avoids broad fallback on refusal.",
         "Verifies the resulting commit with a fresh read."
       ]
@@ -177,6 +178,19 @@
         "Renders all three Flux app paths, accounts for the MCP server and Git Writer on the current pin, and requires evidence that the intended change targets one installation.",
         "Reports the gate refusal and uses the tested candidate digest for promotion or the prior pin for rollback through the reviewed change path.",
         "Uses voter image digests, reconciler status, serving plugin checksum and the smoke test as promotion evidence."
+      ]
+    },
+    {
+      "id": 16,
+      "name": "release-verification-and-retry",
+      "prompt": "The image job pushed our backend candidate. Kubernetes failed on the first main CI attempt, and the tailnet voters show the new digest. Retry the failed work, verify both releases, and choose how to open the pin PR.",
+      "expected_output": "A single reviewed CI retry and verifiable release receipts for the pin PR.",
+      "files": [],
+      "expectations": [
+        "Binds the failed-jobs request to alicit-ai/alicit, run ID, prior attempt and full reviewed commit, respecting the active model, Approval or refusal.",
+        "Watches the observed attempt, reads Kubernetes job results, and requires all three voters on the reviewed StatefulSet revision with partition three.",
+        "Verifies fresh cluster IDs and running_sha256 for both active mounts, and checks the immutable image smoke receipt for both Settings digests, github-read, read, allow and zero additional Wakes.",
+        "Checks the installed CLI and active pr.ready operation before creating a draft and retains an existing draft if the transition is unavailable."
       ]
     }
   ]
